@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.maxieds.mifareclassictoolextension.MainActivity">
+
+    <Toolbar
+        style="@style/ActionBarTheme"
+        android:id="@+id/toolbarActionBar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:title="@string/app_name"
+        android:logo="?actionBarLeftLogoIcon"
+        android:background="?actionBarBackgroundColor"
+        android:theme="@style/ActionBarTheme"
+        android:popupTheme="@style/Actionbar.PopupTheme"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="?deviceStatusBarDividerColor" />
+
+    <GridLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="0dp"
+        android:layout_weight="1"
+        android:background="?deviceStatusBarBackgroundColor"
+        android:columnCount="2"
+        android:padding="0dp"
+        android:rowCount="3">
+
+        <TextView
+
+            />
+
+
+
+    </GridLayout>
