@@ -1,3 +1,8 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources xmlns:tools="http://schemas.android.com/tools" tools:override="true">
+
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="design_navigation_separator_vertical_padding">0dp</dimen>
+
 </resources>

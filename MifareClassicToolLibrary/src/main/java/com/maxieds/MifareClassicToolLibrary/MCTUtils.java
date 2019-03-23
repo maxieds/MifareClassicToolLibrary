@@ -3,7 +3,13 @@ package com.maxieds.MifareClassicToolLibrary;
 import android.util.Log;
 import android.text.format.Time;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Random;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MCTUtils {
 
@@ -70,16 +76,16 @@ public class MCTUtils {
         if(keyFile == null || !keyFile.exists()) {
             return null;
         }
-        List keysList = new ArrayList<String>();
+        java.util.List keysList = new ArrayList<String>();
         byte[] textLineBytes = new byte[256];
         try {
-            InputStream keyDataStream = new FileInputStream(keyFile);
+            java.io.InputStream keyDataStream = new FileInputStream(keyFile);
             while (true) {
-                int lineByteCount = rawFileStream.read(textLineBytes, 0, 256);
+                int lineByteCount = keyDataStream.read(textLineBytes, 0, 256);
                 if (lineByteCount == 0) {
                     break;
                 }
-                if(lineBytes[0] != '#' && lineBytes[0] != '\n') {
+                if(textLineBytes[0] != '#' && textLineBytes[0] != '\n') {
                     keysList.add(new String(textLineBytes, 0, lineByteCount));
                 }
             }
@@ -88,7 +94,7 @@ public class MCTUtils {
             Log.e(TAG, ioe.getStackTrace().toString());
             return null;
         }
-        return keysList.toArray();
+        return Arrays.copyOf(keysList.toArray(), keysList.size(), String[].class);
     }
 
     public static String GetTimestamp() {

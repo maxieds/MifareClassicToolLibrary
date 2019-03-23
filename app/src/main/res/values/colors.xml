@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#008577</color>
-    <color name="colorPrimaryDark">#00574B</color>
-    <color name="colorAccent">#D81B60</color>
+
+    <color name="colorPrimary">#008080</color>
+    <color name="colorPrimaryDark">#001a1a</color>
+    <color name="colorAccent">#66b2b2</color>
+    <color name="colorAccentHighlight">#b2d8d8</color>
+    <color name="deviceStatusBarDividerColor">#003333</color>
+    <color name="deviceStatusBarBackgroundColor">#004040</color>
+    <color name="deviceStatusBarHeaderTextColor">#1a8d8d</color>
+    <color name="deviceStatusBarInfoTextColor">#4da6a6</color>
+    <color name="actionBarBackgroundColor">#001a1a</color>
+    <color name="actionBarTitleTextColor">#99cccc</color>
+    <color name="actionBarSubtitleTextColor">#66b3b3	</color>
+    <color name="transparent">#00ff0000</color>
+
 </resources>

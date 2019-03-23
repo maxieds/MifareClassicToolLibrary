@@ -1,19 +1,19 @@
-package com.maxieds.mifareclassictoolextension;
+package com.maxieds.ParklinkMCTLibraryDemo;
 
 import android.app.Activity;
 import android.support.v7.app.AlertDialog;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 import android.content.DialogInterface;
+import android.widget.BaseAdapter;
 
 import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
-import com.maxieds.mifareclassictoollibrary.MCTUtils;
+import com.maxieds.MifareClassicToolLibrary.MCTUtils;
 
 public class LoadKeysDialog {
 
@@ -23,7 +23,7 @@ public class LoadKeysDialog {
      private static Activity mainActivityRef;
      private AlertDialog displayAddKeysDialog;
      private static Spinner dialogKeyDisplaySpinner;
-     private static SpinnerAdapter dialogKeyDisplaySpinnerAdapter;
+     private static ArrayAdapter dialogKeyDisplaySpinnerAdapter;
      static {
           LoadKeysDialog.mainActivityRef = MainActivity.mainActivityInstance;
           LoadKeysDialog.dialogKeyDisplaySpinner = new Spinner(mainActivityRef);
@@ -34,7 +34,7 @@ public class LoadKeysDialog {
      }
 
      public static String[] GetPresetKeys() {
-          return presetTestKeys.toArray();
+          return Arrays.copyOf(presetTestKeys.toArray(), presetTestKeys.size(), String[].class);
      }
 
      public static boolean AppendPresetKeys(String[] keyData) {
@@ -43,10 +43,10 @@ public class LoadKeysDialog {
           }
           for(int k = 0; k < keyData.length; k++) {
                String nextKey = keyData[k];
-               if(MCTUtils.IsHexAnd6Bytes(nextKey)) {
+               if(MCTUtils.IsHexAnd6Byte(nextKey)) {
                     presetTestKeys.add(nextKey);
-                    dialogKeyDisplaySpinnerAdapter.add(nextKey);
-                    dialogKeyDisplaySpinnerAdapter.notifyDataSetChanged();
+                    dialogKeyDisplaySpinnerAdapter.insert(nextKey, 0);
+                    ((BaseAdapter) dialogKeyDisplaySpinnerAdapter).notifyDataSetChanged();
                }
           }
           return true;
@@ -57,7 +57,7 @@ public class LoadKeysDialog {
      }
 
      public LoadKeysDialog() {
-          displayKeysDialog = null;
+          displayAddKeysDialog = null;
      }
 
      public boolean BuildDialog() {

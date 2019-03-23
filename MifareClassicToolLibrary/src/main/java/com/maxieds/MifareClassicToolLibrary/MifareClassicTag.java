@@ -1,5 +1,7 @@
 package com.maxieds.MifareClassicToolLibrary;
 
+//import android.R;
+//import com.example.package.R;
 import android.util.Log;
 import android.content.Intent;
 import android.app.PendingIntent;
@@ -12,11 +14,15 @@ import android.nfc.tech.MifareClassic;
 import android.content.Context;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-import static com.maxieds.mifareclassictoollibrary.MifareClassicLibraryException.MFCLibraryExceptionType.*;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.*;
 
 public class MifareClassicTag {
 
@@ -479,12 +485,12 @@ public class MifareClassicTag {
           // initialize the tag data bytes from the dump image resource:
           Context appMainContext = MifareClassicToolLibrary.GetApplicationContext();
           try {
-               InputStream rawFileStream = appContext.getResources().openRawResource(resID);
+               InputStream rawFileStream = appMainContext.getResources().openRawResource(resID);
                mfcTagData.mfcDumpImageData = new byte[MFCLASSIC1K_TAG_SIZE];
                int bytesReadCount = 0;
                byte[] byteReadBuffer = new byte[MFCLASSIC_BLOCK_SIZE];
                while (bytesReadCount < MFCLASSIC1K_TAG_SIZE) {
-                    int readByteCount = rawFileStream.read(byteReadBuffer, 0, MFCLASSIC1K_BLOCK_SIZE);
+                    int readByteCount = rawFileStream.read(byteReadBuffer, 0, MFCLASSIC_BLOCK_SIZE);
                     if (readByteCount < 0) {
                          break;
                     }
@@ -500,16 +506,16 @@ public class MifareClassicTag {
                return null;
           }
           // load the rest of the first block (tag read-only) sector data for accounting:
-          byte uidBytes[4];
+          byte[] uidBytes = new byte[4];
           System.arraycopy(mfcTagData.mfcDumpImageData, 0, uidBytes, 0, 4);
           mfcTagData.tagUID = MCTUtils.BytesToHexString(uidBytes);
           byte sakByte = mfcTagData.mfcDumpImageData[5];
           mfcTagData.tagSAK = MCTUtils.BytesToHexString(new byte[] { sakByte });
-          byte atqaBytes[2];
+          byte[] atqaBytes = new byte[2];
           System.arraycopy(mfcTagData.mfcDumpImageData, 6, atqaBytes, 0, 2);
           mfcTagData.tagATQA = MCTUtils.BytesToHexString(atqaBytes);
           mfcTagData.tagATS = "Unknown ATS";
-          byte manuBytes[8];
+          byte[] manuBytes = new byte[8];
           System.arraycopy(mfcTagData.mfcDumpImageData, 8, manuBytes, 0, 8);
           mfcTagData.tagManufacturer = MCTUtils.BytesToHexString(manuBytes);
 

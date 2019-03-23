@@ -1,8 +1,6 @@
 <resources>
 
-    <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -16,5 +14,39 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="ActionBarTheme" parent="Base.Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:drawablePadding">10dp</item>
+        <item name="android:background">@color/actionBarBackgroundColor</item>
+        <item name="android:textColorPrimary">@color/actionBarTitleTextColor</item>
+        <item name="android:textColor">@color/actionBarTitleTextColor</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:subtitleTextColor">@color/actionBarSubtitleTextColor</item>
+        <item name="android:contentInsetEnd">5dp</item>
+        <item name="android:contentInsetStart">7dp</item>
+        <item name="android:contentInsetLeft">7dp</item>
+        <item name="android:titleMarginStart">15dp</item>
+        <item name="android:titleTextStyle">@style/Actionbar.TitleText</item>
+        <item name="android:actionOverflowMenuStyle">@style/AppTheme.PopupOverlay</item>
+        <item name="android:subtitleTextStyle">@style/Actionbar.TitleText</item>
+        <item name="android:textColorSecondary">@color/actionBarSubtitleTextColor</item>
+    </style>
+
+    <style name="Actionbar.TitleText" parent="Base.Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:textColor">@color/actionBarTitleTextColor</item>
+        <item name="android:textColorPrimary">@color/actionBarTitleTextColor</item>
+        <item name="android:textSize">6sp</item>
+    </style>
+
+    <style name="GridButtons">
+        <item name="android:background">@color/colorAccent</item>
+        <item name="android:maxButtonHeight">8dp</item>
+        <item name="android:layout_columnWeight">0.25</item>
+        <item name="android:layout_width">100dp</item>
+        <item name="android:maxHeight">40dp</item>
+        <item name="android:layout_weight">0.29</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">normal|bold</item>
+    </style>
 
 </resources>
