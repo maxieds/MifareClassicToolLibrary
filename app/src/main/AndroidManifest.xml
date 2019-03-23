@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.maxieds.mifareclassictoolextension">
 
-    <uses-feature android:name="android.hardware.nfc"  android:required="true" />
+    <uses-feature
+        android:name="android.hardware.nfc"
+        android:required="true" />
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -28,14 +30,17 @@
             </intent-filter>
 
             <intent-filter>
-                <action android:name="android.nfc.action.TECH_DISCOVERED"/>
-                <action android:name="android.nfc.action.TAG_DISCOVERED"/>
-                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <meta-data android:name="android.nfc.action.TECH_DISCOVERED"
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
                 android:resource="@xml/nfc_tech_filter" />
-            <meta-data android:name="android.nfc.action.TAG_DISCOVERED"
+            <meta-data
+                android:name="android.nfc.action.TAG_DISCOVERED"
                 android:resource="@xml/nfc_tech_filter" />
 
         </activity>
