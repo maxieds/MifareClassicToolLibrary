@@ -18,12 +18,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.Locale;
 
 public class MifareClassicToolLibrary {
 
     private static final String TAG = MifareClassicToolLibrary.class.getSimpleName();
 
     private static MifareClassicDataInterface localMFCDataIface = null;
+
+    public static String GetLibraryVersion() {
+        return String.format(Locale.US, "v%d (%d)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
+    }
 
     public static boolean Initialized() {
         return localMFCDataIface != null;

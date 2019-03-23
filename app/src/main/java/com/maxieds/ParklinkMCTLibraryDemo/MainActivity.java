@@ -7,8 +7,10 @@ import android.view.View;
 import android.content.Intent;
 import android.os.Handler;
 import android.content.Context;
+import android.view.Gravity;
 
 import java.io.File;
+import java.util.Locale;
 
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicTag;
@@ -33,6 +35,11 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
 
           Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarActionBar);
           setSupportActionBar(toolbar);
+          toolbar.setSubtitle(String.format(Locale.US, "App v%d (%d) / Lib v%s", BuildConfig.VERSION_NAME,
+                                            BuildConfig.VERSION_CODE, MifareClassicToolLibrary.GetLibraryVersion()));
+
+          activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(R.raw.mfc1k_random_content_fixed_keys);
+          DisplayNewMFCTag(activeMFCTag);
 
      }
 
@@ -64,12 +71,12 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
      protected void onNewIntent(Intent intent) {
           if(android.nfc.NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction()) ||
              android.nfc.NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
-               android.os.Vibrator vibObj = (android.os.Vibrator) getSystemService(android.content.Context.VIBRATOR_SERVICE);
+               android.os.Vibrator vibObj = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                vibObj.vibrate(300);
                android.nfc.Tag nfcTag = intent.getParcelableExtra(android.nfc.NfcAdapter.EXTRA_TAG);
                if(MifareClassicTag.CheckMifareClassicSupport(nfcTag, this) != 0) {
                     android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, "The discovered NFC device is not a Mifare Classic tag.", android.widget.Toast.LENGTH_SHORT);
-                    toastDisplay.setGravity(android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.BOTTOM, 0, 0);
+                    toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
                     toastDisplay.show();
                }
                else {
@@ -85,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                          android.util.Log.w(TAG, mfcLibExcpt.getStackTrace().toString());
                          String toastMsg = mfcLibExcpt.ToString();
                          android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, toastMsg, android.widget.Toast.LENGTH_SHORT);
-                         toastDisplay.setGravity(android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.BOTTOM, 0, 0);
+                         toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
                          toastDisplay.show();
                     }
                }
@@ -169,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                MainActivity.mainActivityInstance.currentlyTagScanning = false;
                if(!MainActivity.mainActivityInstance.newMFCTagFound) {
                     android.widget.Toast toastDisplay = android.widget.Toast.makeText(com.maxieds.ParklinkMCTLibraryDemo.MainActivity.mainActivityInstance, "No Mifare Classic tags found!", android.widget.Toast.LENGTH_SHORT);
-                    toastDisplay.setGravity(android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.BOTTOM, 0, 0);
+                    toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
                     toastDisplay.show();
                }
           }
@@ -245,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                toastStatusMsg += "NFC is currently DISABLED on the device for tag reading.";
           }
           android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, toastStatusMsg, android.widget.Toast.LENGTH_SHORT);
-          toastDisplay.setGravity(android.view.Gravity.CENTER_HORIZONTAL | android.view.Gravity.BOTTOM, 0, 0);
+          toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
      }
 
      protected void ActionButtonDisplayNFCSettings(View btnView) {
