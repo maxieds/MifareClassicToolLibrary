@@ -36,11 +36,17 @@ public class SectorUIDisplay {
           TextView tvSectorDisplayBytes = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayBytesText);
           for(int blk = 0; blk < sectorBlockData.length; blk++) {
                String blockHexBytesText = MCTUtils.BytesToHexString(sectorBlockData[blk]);
-               blockHexBytesText.replaceAll("(.{2})", "$1 : ");
+               String blockHexBytesTextSep = new String();
+               for(int spos = 0; spos < blockHexBytesText.length(); spos += 2) {
+                    blockHexBytesTextSep += blockHexBytesText.substring(spos, spos + 2);
+                    if(spos < blockHexBytesText.length() - 2) {
+                         blockHexBytesTextSep += ":";
+                    }
+               }
                if(blk > 0) {
                     tvSectorDisplayBytes.append("\n");
                }
-               tvSectorDisplayBytes.append(blockHexBytesText);
+               tvSectorDisplayBytes.append(blockHexBytesTextSep);
           }
           return sectorDisplay;
      }

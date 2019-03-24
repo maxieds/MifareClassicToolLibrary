@@ -2,7 +2,6 @@ package com.maxieds.ParklinkMCTLibraryDemo;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.content.Intent;
 import android.os.Handler;
@@ -20,6 +19,7 @@ import android.net.Uri;
 import android.content.ActivityNotFoundException;
 import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toolbar;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,10 +57,11 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           setContentView(R.layout.activity_main);
           ConfigureMCTLibrary();
 
-          android.support.v7.widget.Toolbar toolbar = findViewById(R.id.toolbarActionBar);
+          Toolbar toolbar = findViewById(R.id.toolbarActionBar);
+          toolbar.setLogo(R.drawable.main_action_bar_logo_icon);
           toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) / Lib %s", BuildConfig.VERSION_NAME,
                                             BuildConfig.VERSION_CODE, MifareClassicToolLibrary.GetLibraryVersion()));
-          setSupportActionBar(toolbar);
+          setActionBar(toolbar);
 
           // set this last so we display immediately after returning:
           delayInitialTagDisplayHandler.postDelayed(delayInitialTagDisplayRunnable, LAUNCH_DEFAULT_TAG_DELAY);

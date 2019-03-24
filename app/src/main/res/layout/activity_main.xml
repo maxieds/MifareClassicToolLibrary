@@ -9,7 +9,7 @@
     tools:context="com.maxieds.ParklinkMCTLibraryDemo.MainActivity"
     >
 
-    <android.support.v7.widget.Toolbar
+    <android.widget.Toolbar
         style="@style/ActionBarTheme"
         android:id="@+id/toolbarActionBar"
         android:layout_width="fill_parent"

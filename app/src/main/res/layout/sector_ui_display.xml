@@ -16,7 +16,7 @@
         android:id="@+id/sectorDisplayHeaderText"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/transparent"
+        android:background="@color/colorAccent"
         android:drawableLeft="@drawable/sector_marker_icon"
         android:drawablePadding="3dp"
         android:paddingRight="10dp"
@@ -36,11 +36,13 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorPrimary"
-        android:paddingRight="14dp"
+        android:paddingRight="15dp"
+        android:paddingLeft="15dp"
         android:text=""
         android:textColor="@color/colorAccentHighlight"
-        android:textSize="10sp"
+        android:textSize="12sp"
         android:textStyle="normal|bold|italic"
+        android:fontFamily="serif-monospace"
         />
 
     <View

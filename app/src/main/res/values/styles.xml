@@ -24,6 +24,8 @@
         <item name="android:textColor">@color/actionBarTitleTextColor</item>
         <item name="android:textSize">10sp</item>
         <item name="android:subtitleTextColor">@color/actionBarSubtitleTextColor</item>
+        <item name="android:textStyle">normal|bold|italic</item>
+        <item name="android:fontFamily">sans-serif-smallcaps</item>
         <item name="android:contentInsetEnd">5dp</item>
         <item name="android:contentInsetStart">7dp</item>
         <item name="android:contentInsetLeft">7dp</item>
@@ -50,6 +52,7 @@
         <item name="android:textSize">11sp</item>
         <item name="android:textStyle">normal|bold</item>
         <item name="android:fontFamily">sans-serif-smallcaps</item>
+        <item name="android:drawablePadding">3dp</item>
     </style>
 
 </resources>
