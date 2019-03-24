@@ -31,7 +31,7 @@ public class SectorUIDisplay {
           TextView tvSectorDisplayHeader = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayHeaderText);
           tvSectorDisplayHeader.setText(String.format(Locale.US, "Sector %02d", sectorIndex));
           if(sectorReadFailed) {
-               tvSectorDisplayHeader.append(" -- (READ FAILED)")
+               tvSectorDisplayHeader.append(" -- (READ FAILED)");
           }
           TextView tvSectorDisplayBytes = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayBytesText);
           for(int blk = 0; blk < sectorBlockData.length; blk++) {
