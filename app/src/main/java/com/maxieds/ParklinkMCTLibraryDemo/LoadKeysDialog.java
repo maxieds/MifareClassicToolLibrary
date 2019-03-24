@@ -6,11 +6,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.content.DialogInterface;
 import android.widget.BaseAdapter;
+import android.view.ViewGroup;
+import android.view.View;
 
 import java.io.File;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import com.maxieds.ParklinkMCTLibraryDemo.R;
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
@@ -19,32 +20,55 @@ public class LoadKeysDialog {
 
      private static final String TAG = LoadKeysDialog.class.getSimpleName();
 
-     private static List<String> presetTestKeys = new ArrayList<String>();
+     private static List<String> presetTestKeys;
      private static Activity mainActivityRef;
      private AlertDialog displayAddKeysDialog;
      private static Spinner dialogKeyDisplaySpinner;
-     private static ArrayAdapter dialogKeyDisplaySpinnerAdapter;
-     static {
-          LoadKeysDialog.mainActivityRef = MainActivity.mainActivityInstance;
-          LoadKeysDialog.dialogKeyDisplaySpinner = new Spinner(mainActivityRef);
-          LoadKeysDialog.dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
-               LoadKeysDialog.mainActivityRef, android.R.layout.simple_list_item_1, LoadKeysDialog.GetPresetKeys());
-          LoadKeysDialog.dialogKeyDisplaySpinner.setAdapter(dialogKeyDisplaySpinnerAdapter);
+     private static ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter;
+     private static boolean staticVariablesInit = false;
+
+     public static void initStaticVariablesBeforeClass() {
+          presetTestKeys = new ArrayList<String>();
+          mainActivityRef = MainActivity.mainActivityInstance;
+          dialogKeyDisplaySpinner = new Spinner(mainActivityRef);
+          dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
+               mainActivityRef, android.R.layout.simple_spinner_item, presetTestKeys);
+          dialogKeyDisplaySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          dialogKeyDisplaySpinner.setAdapter(dialogKeyDisplaySpinnerAdapter);
+          staticVariablesInit = true;
      }
 
      public static String[] GetPresetKeys() {
-          return Arrays.copyOf(presetTestKeys.toArray(), presetTestKeys.size(), String[].class);
+          if(!staticVariablesInit) {
+               initStaticVariablesBeforeClass();
+          }
+          if(presetTestKeys.size() == 0) {
+               String[] defaultKeyData = new String[] {
+                    MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_DEFAULT),
+                    MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY),
+                    MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_NFC_FORUM)
+               };
+               return defaultKeyData;
+          }
+          String[] keysStringArray = new String[presetTestKeys.size()];
+          for(int s = 0; s < presetTestKeys.size(); s++) {
+               keysStringArray[s] = presetTestKeys.get(s);
+          }
+          return keysStringArray;
      }
 
      public static boolean AppendPresetKeys(String[] keyData) {
+          if(!staticVariablesInit) {
+               initStaticVariablesBeforeClass();
+          }
           if(keyData == null) {
                return false;
           }
           for(int k = 0; k < keyData.length; k++) {
                String nextKey = keyData[k];
                if(MCTUtils.IsHexAnd6Byte(nextKey)) {
-                    presetTestKeys.add(nextKey);
-                    dialogKeyDisplaySpinnerAdapter.insert(nextKey, 0);
+                    presetTestKeys.add(0, nextKey);
+                    //dialogKeyDisplaySpinnerAdapter.insert(nextKey, 0);
                     ((BaseAdapter) dialogKeyDisplaySpinnerAdapter).notifyDataSetChanged();
                }
           }
@@ -52,6 +76,9 @@ public class LoadKeysDialog {
      }
 
      public static void ClearKeyData() {
+          if(!staticVariablesInit) {
+               initStaticVariablesBeforeClass();
+          }
           presetTestKeys.clear();
      }
 
@@ -64,26 +91,37 @@ public class LoadKeysDialog {
           AlertDialog.Builder dialog = new AlertDialog.Builder(mainActivityRef);
           dialog.setIcon(R.drawable.add_key_dialog_icon);
           dialog.setTitle(R.string.loadKeysDialogTitle);
+          if(dialogKeyDisplaySpinner.getParent() != null) {
+               ((ViewGroup) dialogKeyDisplaySpinner.getParent()).removeView(dialogKeyDisplaySpinner);
+          }
           dialog.setView(dialogKeyDisplaySpinner);
           dialog.setMessage(R.string.loadKeysDialogDesc);
           dialog.setNegativeButton("Done", null);
-          dialog.setNeutralButton("Load Keys", new DialogInterface.OnClickListener() {
-               @Override
-               public void onClick(DialogInterface dialog, int whichBtn) {
-                    File keyDataFile = MainActivity.GetUserExternalFileSelection();
-                    String[] keyDataArray = MCTUtils.ReadKeysFromTextFile(keyDataFile);
-                    LoadKeysDialog.AppendPresetKeys(keyDataArray);
-               }
-          });
-          dialog.setPositiveButton("Random Key", new DialogInterface.OnClickListener() {
-               @Override
-               public void onClick(DialogInterface dialog, int whichBtn) {
-                    String randomKey = MCTUtils.BytesToHexString(MCTUtils.GetRandomBytes(6));
-                    LoadKeysDialog.AppendPresetKeys(new String[] { randomKey });
-               }
-          });
+          dialog.setNeutralButton("Load Keys", null);
+          dialog.setPositiveButton("Random Key", null);
           dialog.setInverseBackgroundForced(true);
           displayAddKeysDialog = dialog.create();
+          displayAddKeysDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+
+               @Override
+               public void onShow(DialogInterface dialog) {
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                         @Override
+                         public void onClick(View view) {
+                              String randomKey = MCTUtils.BytesToHexString(MCTUtils.GetRandomBytes(6));
+                              LoadKeysDialog.AppendPresetKeys(new String[]{ randomKey });
+                         }
+                    });
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener() {
+                         @Override
+                         public void onClick(View view) {
+                              File keyDataFile = MainActivity.GetUserExternalFileSelection();
+                              String[] keyDataArray = MCTUtils.ReadKeysFromTextFile(keyDataFile);
+                              LoadKeysDialog.AppendPresetKeys(keyDataArray);
+                         }
+                    });
+               }
+          });
           return displayAddKeysDialog != null;
 
      }

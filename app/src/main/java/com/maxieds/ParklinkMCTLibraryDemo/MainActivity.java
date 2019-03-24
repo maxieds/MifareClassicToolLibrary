@@ -2,15 +2,13 @@ package com.maxieds.ParklinkMCTLibraryDemo;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.app.Activity;
-import android.widget.Toolbar;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.content.Intent;
 import android.os.Handler;
 import android.content.Context;
 import android.view.Gravity;
 import android.widget.LinearLayout;
-import android.view.LayoutInflater;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.nfc.NfcAdapter;
@@ -42,15 +40,11 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      private static boolean newMFCTagFound = false;
      private static MifareClassicTag activeMFCTag = null;
 
-     private static final int LAUNCH_DEFAULT_TAG_DELAY = 2000;
+     private static final int LAUNCH_DEFAULT_TAG_DELAY = 500;
      private static Handler delayInitialTagDisplayHandler = new Handler();
      private static Runnable delayInitialTagDisplayRunnable = new Runnable() {
           public void run() {
-               if (MainActivity.mainActivityInstance == null) {
-                    MainActivity.delayInitialTagDisplayHandler.postDelayed(MainActivity.delayInitialTagDisplayRunnable, MainActivity.LAUNCH_DEFAULT_TAG_DELAY / 2);
-                    return;
-               }
-               activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(R.raw.mfc1k_random_content_fixed_keys);
+               MainActivity.mainActivityInstance.activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(R.raw.mfc1k_random_content_fixed_keys);
                MainActivity.mainActivityInstance.DisplayNewMFCTag(activeMFCTag);
           }
      };
@@ -59,22 +53,17 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      protected void onCreate(Bundle savedInstanceState) {
 
           super.onCreate(savedInstanceState);
-          try {
-               setContentView(R.layout.activity_main);
-          } catch(Exception e) {
-               Log.e(TAG, "onCreate", e);
-               throw e;
-          }
+          mainActivityInstance = this;
+          setContentView(R.layout.activity_main);
           ConfigureMCTLibrary();
 
-          Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarActionBar);
+          android.support.v7.widget.Toolbar toolbar = findViewById(R.id.toolbarActionBar);
           toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) / Lib %s", BuildConfig.VERSION_NAME,
                                             BuildConfig.VERSION_CODE, MifareClassicToolLibrary.GetLibraryVersion()));
-          setActionBar(toolbar);
+          setSupportActionBar(toolbar);
 
-          // set this last so we return immediately after it becomes non-NULL:
+          // set this last so we display immediately after returning:
           delayInitialTagDisplayHandler.postDelayed(delayInitialTagDisplayRunnable, LAUNCH_DEFAULT_TAG_DELAY);
-          mainActivityInstance = this;
 
      }
 
@@ -191,6 +180,9 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
      private void DisplayNewMFCTag(MifareClassicTag mfcTagData) {
           if(mfcTagData == null) {
+               Toast toastDisplay = Toast.makeText(this, "Attempt to display a NULL tag!", Toast.LENGTH_SHORT);
+               toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+               toastDisplay.show();
                return;
           }
           ClearActiveDisplayWindow();
@@ -198,6 +190,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           String toastNoticeMsg = String.format(Locale.US, "New Tag Found!\n\nATQA: %s\nSAK: %s\nATS: %s",
                                                 mfcTagData.GetATQA(), mfcTagData.GetSAK(), mfcTagData.GetATS());
           Toast toastDisplay = Toast.makeText(this, toastNoticeMsg, Toast.LENGTH_LONG);
+          toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
           toastDisplay.show();
           // next, display the quick summary tag stats at the top of the screen below the toolbar:
           TextView tvTagDesc = (TextView) findViewById(R.id.deviceStatusBarTagType);
@@ -208,10 +201,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           tvTagSizes.setText(mfcTagData.GetTagSizeSpecString());
           // loop and add each sector to the linear layout within the scroll viewer:
           LinearLayout mainScrollerLayout = (LinearLayout) findViewById(R.id.mainDisplayItemsListLayout);
-          LayoutInflater sectorLayoutInflater = getLayoutInflater();
           for(int sec = 0; sec < mfcTagData.GetTagSectors(); sec++) {
                MifareClassicTag.MFCSector nextSectorData = mfcTagData.GetSectorByIndex(sec);
-               byte[] sectorBytes = new byte[nextSectorData.sectorSize];
                boolean sectorReadFailed = mfcTagData.GetSectorReadStatus(sec);
                LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec, sectorReadFailed).GetDisplayLayout();
                mainScrollerLayout.addView(sectorDisplay);
@@ -232,15 +223,21 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
      };
 
-     protected void ActionButtonScanNewTag(View btnView) {
+     public void ActionButtonScanNewTag(View btnView) {
           newMFCTagFound = false;
           currentlyTagScanning = true;
           MifareClassicToolLibrary.StartLiveTagScanning(this);
           tagScanHandler.postDelayed(tagScanRunnable, TAG_SCANNING_TIME);
+          Toast toastDisplay = Toast.makeText(this, "Scanning for new tag ...", Toast.LENGTH_LONG);
+          toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+          toastDisplay.show();
      }
 
-     protected void ActionButtonWriteTagToFile(View btnView) {
+     public void ActionButtonWriteTagToFile(View btnView) {
           if (activeMFCTag == null) {
+               Toast toastDisplay = Toast.makeText(this, "No active MFC tag to save!", Toast.LENGTH_SHORT);
+               toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+               toastDisplay.show();
                return;
           }
           String outfileBasePath = String.format(Locale.ENGLISH, "MifareClassic%s-tagdump-%s",
@@ -271,13 +268,13 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           return;
      }
 
-     protected void ActionButtonSetKeys(View btnView) {
+     public void ActionButtonSetKeys(View btnView) {
           LoadKeysDialog loadKeysDialog = new LoadKeysDialog();
           loadKeysDialog.BuildDialog();
           loadKeysDialog.Show();
      }
 
-     protected void ActionButtonClear(View btnView) {
+     public void ActionButtonClear(View btnView) {
           LoadKeysDialog.ClearKeyData();
           if(activeMFCTag != null) {
                ClearActiveDisplayWindow();
@@ -286,15 +283,15 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           ClearActiveDisplayWindow();
      }
 
-     protected void ActionButtonCheckForMFCSupport(View btnView) {
+     public void ActionButtonCheckForMFCSupport(View btnView) {
           boolean phoneMFCSupport = MifareClassicToolLibrary.CheckPhoneMFCSupport();
           boolean phoneNFCEnabled = MifareClassicToolLibrary.CheckNFCEnabled(false);
           String toastStatusMsg = "";
           if(phoneMFCSupport) {
-               toastStatusMsg += "This Android device supports MFC tags.\n";
+               toastStatusMsg += "This Android device supports MFC tags. ";
           }
           else {
-               toastStatusMsg += "This Android device DOES NOT support MFC tags.\n";
+               toastStatusMsg += "This Android device DOES NOT support MFC tags. ";
           }
           if(phoneNFCEnabled) {
                toastStatusMsg += "NFC is currently enabled on the device for tag reading.";
@@ -304,9 +301,19 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
           Toast toastDisplay = Toast.makeText(this, toastStatusMsg, Toast.LENGTH_SHORT);
           toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+          toastDisplay.show();
      }
 
-     protected void ActionButtonDisplayNFCSettings(View btnView) {
-          MifareClassicToolLibrary.CheckNFCEnabled(true);
+     public void ActionButtonDisplayNFCSettings(View btnView) {
+          if(MifareClassicToolLibrary.CheckNFCEnabled(true)) {
+               Toast toastDisplay = Toast.makeText(this, "NFC is already turned on!", Toast.LENGTH_SHORT);
+               toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+               toastDisplay.show();
+          }
+          else {
+               Toast toastDisplay = Toast.makeText(this, "NFC is DISABLED! Open phone settings to enable NFC.", Toast.LENGTH_SHORT);
+               toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+               toastDisplay.show();
+          }
      }
 }

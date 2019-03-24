@@ -69,8 +69,9 @@ public class MifareClassicToolLibrary {
                 startNFCIntent = new Intent(Settings.ACTION_NFC_SETTINGS);
             }
             else {
-                startNFCIntent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+                startNFCIntent = new Intent(Settings.ACTION_NFC_SETTINGS);
             }
+            startNFCIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
             GetApplicationContext().startActivity(startNFCIntent);
             return CheckNFCEnabled(false);
         }

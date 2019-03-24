@@ -30,7 +30,7 @@ public class MifareClassicTag {
 
      public static final int MFCKEY_BYTE_SIZE = 6;
 
-     public class MFCSector {
+     public static class MFCSector {
 
          public int sectorAddress;
          public int sectorSize;
@@ -436,7 +436,7 @@ public class MifareClassicTag {
      }
 
      public String GetTagSizeSpecString() {
-          String specString = String.format(Locale.US, "%s | %d sectors x %d blocks @ %s",
+          String specString = String.format(Locale.US, "%s | %d Sectors x %d Blocks @ %sB",
                                             GetTagByteCountString(GetTagSize()), tagSectorCount,
                                             tagBlockCount, tagBytesPerBlock);
           return specString;
@@ -486,11 +486,13 @@ public class MifareClassicTag {
      }
 
      public static final int MFCLASSIC1K_TAG_SIZE = 1024;
+     public static final int MFCLASSIC1K_BLOCKS_PER_SECTOR = 4;
      public static final int MFCLASSIC_BLOCK_SIZE = 16;
 
      public static MifareClassicTag LoadMifareClassic1KFromResource(int resID) {
 
           if(!MifareClassicToolLibrary.Initialized()) {
+               Log.e(TAG, "ERROR: MifareClassicToolLibrary NOT initialized!");
                return null;
           }
 
@@ -523,8 +525,33 @@ public class MifareClassicTag {
                     return null;
                }
           } catch(IOException ioe) {
-               Log.e(TAG, ioe.getStackTrace().toString());
+               Log.e(TAG, "ERROR: " + ioe.getStackTrace().toString());
                return null;
+          }
+          // setup the individual sector data:
+          for(int sec = 0; sec < mfcTagData.tagSectorCount; sec++) {
+               MFCSector nextSector = new MFCSector();
+               nextSector.sectorAddress = sec;
+               nextSector.sectorSize = mfcTagData.tagBlockCount * mfcTagData.tagBytesPerBlock;
+               nextSector.sectorBlockCount = mfcTagData.tagBlockCount;
+               nextSector.sectorFirstBlock = sec * MFCLASSIC1K_BLOCKS_PER_SECTOR;
+               nextSector.sectorBytesPerBlock = mfcTagData.tagBytesPerBlock;
+               nextSector.sectorBlockData = new byte[MFCLASSIC1K_BLOCKS_PER_SECTOR][];
+               for(int blk = 0; blk < MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
+                    byte[] blockBytes = new byte[mfcTagData.tagBytesPerBlock];
+                    System.arraycopy(mfcTagData.mfcDumpImageData, sec * MFCLASSIC1K_BLOCKS_PER_SECTOR + blk,
+                                     blockBytes, 0, mfcTagData.tagBytesPerBlock);
+                    nextSector.sectorBlockData[blk] = blockBytes;
+                    if(blk == MFCLASSIC1K_BLOCKS_PER_SECTOR - 1) {
+                         nextSector.keyA = new byte[6];
+                         System.arraycopy(blockBytes, 0, nextSector.keyA, 0, 6);
+                         nextSector.sectorAccessBits = new byte[4];
+                         System.arraycopy(blockBytes, 6, nextSector.sectorAccessBits, 0, 4);
+                         nextSector.keyB = new byte[6];
+                         System.arraycopy(blockBytes, 10, nextSector.keyB, 0, 6);
+                    }
+               }
+               mfcTagData.tagSectors.add(nextSector);
           }
           // load the rest of the first block (tag read-only) sector data for accounting:
           byte[] uidBytes = new byte[4];
@@ -539,7 +566,6 @@ public class MifareClassicTag {
           byte[] manuBytes = new byte[8];
           System.arraycopy(mfcTagData.mfcDumpImageData, 8, manuBytes, 0, 8);
           mfcTagData.tagManufacturer = MCTUtils.BytesToHexString(manuBytes);
-
           return mfcTagData;
 
      }
