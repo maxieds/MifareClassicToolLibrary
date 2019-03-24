@@ -1,11 +1,11 @@
 <resources>
-    <string name="app_name">Mifare Classic Tool Library Demo</string>
+    <string name="app_name">MCT Library Demo</string>
     <string name="action_settings">Settings</string>
 
     <string name="loadKeysDialogTitle">"Choose preset key A/B's for testing ..."</string>
-    <string name="loadKeysDialogDesc">The library can input a list of preset\n
-                                      12 character (6-byte) key strings which it will use\n
-                                      to try to authenticate with the KeyA/KeyB settings on\n
+    <string name="loadKeysDialogDesc">The library can input a list of preset
+                                      12 character (6-byte) key strings which it will use
+                                      to try to authenticate with the KeyA/KeyB settings on
                                       each sector of the Mifare Classic tags.
     </string>
 </resources>

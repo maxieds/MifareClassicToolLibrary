@@ -16,7 +16,7 @@
         android:id="@+id/sectorDisplayHeaderText"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="?colorAccent"
+        android:background="@color/transparent"
         android:drawableLeft="@drawable/sector_marker_icon"
         android:drawablePadding="1dp"
         android:paddingRight="10dp"

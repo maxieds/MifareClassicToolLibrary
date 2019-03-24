@@ -27,7 +27,7 @@ public class MifareClassicToolLibrary {
     private static MifareClassicDataInterface localMFCDataIface = null;
 
     public static String GetLibraryVersion() {
-        return String.format(Locale.US, "v%d (%d)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
+        return String.format(Locale.US, "v%s (%s)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
     }
 
     public static boolean Initialized() {

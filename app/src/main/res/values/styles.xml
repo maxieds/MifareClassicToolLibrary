@@ -9,6 +9,8 @@
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@color/transparent</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
@@ -17,7 +19,7 @@
 
     <style name="ActionBarTheme" parent="Base.Theme.AppCompat.Light.DarkActionBar">
         <item name="android:drawablePadding">10dp</item>
-        <item name="android:background">@color/actionBarBackgroundColor</item>
+        <item name="android:background">@color/transparent</item>
         <item name="android:textColorPrimary">@color/actionBarTitleTextColor</item>
         <item name="android:textColor">@color/actionBarTitleTextColor</item>
         <item name="android:textSize">10sp</item>
@@ -47,6 +49,7 @@
         <item name="android:layout_weight">0.29</item>
         <item name="android:textSize">11sp</item>
         <item name="android:textStyle">normal|bold</item>
+        <item name="android:fontFamily">sans-serif-smallcaps</item>
     </style>
 
 </resources>

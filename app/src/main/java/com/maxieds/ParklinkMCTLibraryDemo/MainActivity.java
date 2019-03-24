@@ -21,10 +21,7 @@ import android.provider.OpenableColumns;
 import android.net.Uri;
 import android.content.ActivityNotFoundException;
 import android.os.Looper;
-import android.os.Build;
-import android.support.v4.content.res.ResourcesCompat;
-import android.graphics.drawable.Drawable;
-import android.view.WindowManager;
+import android.support.v7.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +33,7 @@ import com.maxieds.MifareClassicToolLibrary.MifareClassicToolLibrary;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicDataInterface;
 
-public class MainActivity extends Activity implements MifareClassicDataInterface {
+public class MainActivity extends AppCompatActivity implements MifareClassicDataInterface {
 
      public static final String TAG = MainActivity.class.getSimpleName();
 
@@ -62,21 +59,16 @@ public class MainActivity extends Activity implements MifareClassicDataInterface
      protected void onCreate(Bundle savedInstanceState) {
 
           super.onCreate(savedInstanceState);
-          if (Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP)
-          {
-               Drawable gradientBackground = ResourcesCompat.getDrawable(getResources(), R.drawable.ui_gradient, null);
-               getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-               getWindow().setStatusBarColor(getResources().getColor(R.color.transparent));
-               getWindow().setNavigationBarColor(getResources().getColor(R.color.transparent));
-               getWindow().setBackgroundDrawable(gradientBackground);
+          try {
+               setContentView(R.layout.activity_main);
+          } catch(Exception e) {
+               Log.e(TAG, "onCreate", e);
+               throw e;
           }
-
-          setContentView(R.layout.activity_main);
           ConfigureMCTLibrary();
 
           Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarActionBar);
-          //toolbar.setBackground(ContextCompat.getDrawable(this, R.drawable.ui_gradient));
-          toolbar.setSubtitle(String.format(Locale.US, "App v%d (%d) / Lib v%s", BuildConfig.VERSION_NAME,
+          toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) / Lib %s", BuildConfig.VERSION_NAME,
                                             BuildConfig.VERSION_CODE, MifareClassicToolLibrary.GetLibraryVersion()));
           setActionBar(toolbar);
 
