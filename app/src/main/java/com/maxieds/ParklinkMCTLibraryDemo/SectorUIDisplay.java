@@ -25,11 +25,14 @@ public class SectorUIDisplay {
           return mainLayoutContainer;
      }
 
-     public static SectorUIDisplay NewInstance(byte[][] sectorBlockData, int sectorIndex) {
+     public static SectorUIDisplay NewInstance(byte[][] sectorBlockData, int sectorIndex, boolean sectorReadFailed) {
           SectorUIDisplay sectorDisplay = new SectorUIDisplay();
           LinearLayout sectorMainLayoutContainer = sectorDisplay.GetDisplayLayout();
           TextView tvSectorDisplayHeader = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayHeaderText);
           tvSectorDisplayHeader.setText(String.format(Locale.US, "Sector %02d", sectorIndex));
+          if(sectorReadFailed) {
+               tvSectorDisplayHeader.append(" -- (READ FAILED)")
+          }
           TextView tvSectorDisplayBytes = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayBytesText);
           for(int blk = 0; blk < sectorBlockData.length; blk++) {
                String blockHexBytesText = MCTUtils.BytesToHexString(sectorBlockData[blk]);

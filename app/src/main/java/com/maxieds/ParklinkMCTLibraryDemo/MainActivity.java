@@ -206,7 +206,8 @@ public class MainActivity extends Activity implements MifareClassicDataInterface
           for(int sec = 0; sec < mfcTagData.GetTagSectors(); sec++) {
                MifareClassicTag.MFCSector nextSectorData = mfcTagData.GetSectorByIndex(sec);
                byte[] sectorBytes = new byte[nextSectorData.sectorSize];
-               LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec).GetDisplayLayout();
+               boolean sectorReadFailed = mfcTagData.GetSectorReadStatus(sec);
+               LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec, sectorReadFailed).GetDisplayLayout();
                mainScrollerLayout.addView(sectorDisplay);
           }
      }

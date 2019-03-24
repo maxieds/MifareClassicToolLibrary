@@ -473,6 +473,18 @@ public class MifareClassicTag {
           return tagSectors.get(index);
      }
 
+     public boolean GetSectorReadStatus(int index) {
+          if(index < 0) {
+               return false;
+          }
+          for(int fsec = 0; fsec < failedSectors.size(); fsec++) {
+               if(failedSectors.get(fsec).sectorAddress == index) {
+                    return false;
+               }
+          }
+          return true;
+     }
+
      public static final int MFCLASSIC1K_TAG_SIZE = 1024;
      public static final int MFCLASSIC_BLOCK_SIZE = 16;
 
