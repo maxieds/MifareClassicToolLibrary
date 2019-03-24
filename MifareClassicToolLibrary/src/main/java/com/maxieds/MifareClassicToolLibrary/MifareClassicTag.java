@@ -137,7 +137,7 @@ public class MifareClassicTag {
      private String mfcTagType;
      private int tagSize, tagSectorCount, tagBlockCount, tagBytesPerBlock;
      private byte[] mfcDumpImageData;
-     private List<MFCSector> failedSectors;
+     private List<MFCSector> failedSectors, tagSectors;
      private String rfTechCaps, tagManufacturer;
      private String tagUID, tagATQA, tagSAK, tagATS;
 
@@ -146,6 +146,7 @@ public class MifareClassicTag {
          tagSize = tagSectorCount = tagBlockCount = tagBytesPerBlock = 0;
          mfcDumpImageData = null;
          failedSectors = new ArrayList<MFCSector>();
+         tagSectors = new ArrayList<MFCSector>();
          rfTechCaps = tagManufacturer = "";
          tagUID = tagATQA = tagSAK = tagATS = "";
          return true;
@@ -310,6 +311,7 @@ public class MifareClassicTag {
                if(bytesRead < nextSector.sectorSize) {
                     failedSectors.add(nextSector);
                }
+               tagSectors.add(nextSector);
                sct += nextSector.sectorSize;
                if(nextSector.sectorBlockData == null) {
                     mfcDumpDataArrayPos += nextSector.sectorSize;
@@ -462,6 +464,13 @@ public class MifareClassicTag {
           outStream.write(mfcDumpImageData);
           outStream.close();
           return true;
+     }
+
+     public MFCSector GetSectorByIndex(int index) {
+          if(index < 0 || index >= tagSectors.size()) {
+               return null;
+          }
+          return tagSectors.get(index);
      }
 
      public static final int MFCLASSIC1K_TAG_SIZE = 1024;

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.support.v7.app.AlertDialog;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.SpinnerAdapter;
 import android.content.DialogInterface;
 import android.widget.BaseAdapter;
 
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.maxieds.ParklinkMCTLibraryDemo.R;
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
 
 public class LoadKeysDialog {
@@ -29,7 +29,6 @@ public class LoadKeysDialog {
           LoadKeysDialog.dialogKeyDisplaySpinner = new Spinner(mainActivityRef);
           LoadKeysDialog.dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
                LoadKeysDialog.mainActivityRef, android.R.layout.simple_list_item_1, LoadKeysDialog.GetPresetKeys());
-          //LoadKeysDialog.dialogKeyDisplaySpinner.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
           LoadKeysDialog.dialogKeyDisplaySpinner.setAdapter(dialogKeyDisplaySpinnerAdapter);
      }
 

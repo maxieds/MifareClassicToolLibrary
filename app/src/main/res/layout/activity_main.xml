@@ -141,6 +141,7 @@
         android:orientation="vertical"
         android:verticalScrollbarPosition="right"
         android:gravity="bottom"
+        android:background="@color/colorPrimary"
         >
 
         <LinearLayout

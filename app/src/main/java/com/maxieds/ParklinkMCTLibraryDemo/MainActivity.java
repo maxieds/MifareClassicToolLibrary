@@ -1,6 +1,7 @@
 package com.maxieds.ParklinkMCTLibraryDemo;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -8,15 +9,30 @@ import android.content.Intent;
 import android.os.Handler;
 import android.content.Context;
 import android.view.Gravity;
+import android.widget.LinearLayout;
+import android.view.LayoutInflater;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.nfc.NfcAdapter;
+import android.nfc.Tag;
+import android.os.Vibrator;
+import android.database.Cursor;
+import android.provider.OpenableColumns;
+import android.net.Uri;
+import android.content.ActivityNotFoundException;
+import android.os.Looper;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Locale;
 
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicTag;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicToolLibrary;
+import com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException;
+import com.maxieds.MifareClassicToolLibrary.MifareClassicDataInterface;
 
-public class MainActivity extends AppCompatActivity implements com.maxieds.MifareClassicToolLibrary.MifareClassicDataInterface {
+public class MainActivity extends AppCompatActivity implements MifareClassicDataInterface {
 
      public static final String TAG = MainActivity.class.getSimpleName();
 
@@ -69,13 +85,13 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
 
      @Override
      protected void onNewIntent(Intent intent) {
-          if(android.nfc.NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction()) ||
-             android.nfc.NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
-               android.os.Vibrator vibObj = (android.os.Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+          if(NfcAdapter.ACTION_TECH_DISCOVERED.equals(intent.getAction()) ||
+             NfcAdapter.ACTION_TAG_DISCOVERED.equals(intent.getAction())) {
+               Vibrator vibObj = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                vibObj.vibrate(300);
-               android.nfc.Tag nfcTag = intent.getParcelableExtra(android.nfc.NfcAdapter.EXTRA_TAG);
+               Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
                if(MifareClassicTag.CheckMifareClassicSupport(nfcTag, this) != 0) {
-                    android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, "The discovered NFC device is not a Mifare Classic tag.", android.widget.Toast.LENGTH_SHORT);
+                    Toast toastDisplay = Toast.makeText(this, "The discovered NFC device is not a Mifare Classic tag.", Toast.LENGTH_SHORT);
                     toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
                     toastDisplay.show();
                }
@@ -88,10 +104,10 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                          activeMFCTag = mfcTag;
                          DisplayNewMFCTag(activeMFCTag);
                          newMFCTagFound = true;
-                    } catch(com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException mfcLibExcpt) {
-                         android.util.Log.w(TAG, mfcLibExcpt.getStackTrace().toString());
+                    } catch(MifareClassicLibraryException mfcLibExcpt) {
+                         Log.w(TAG, mfcLibExcpt.getStackTrace().toString());
                          String toastMsg = mfcLibExcpt.ToString();
-                         android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, toastMsg, android.widget.Toast.LENGTH_SHORT);
+                         Toast toastDisplay = Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT);
                          toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
                          toastDisplay.show();
                     }
@@ -105,9 +121,9 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                case FILE_SELECT_CODE:
                     if (resultCode == RESULT_OK) {
                          String filePath = "";
-                         android.database.Cursor cursor = getContentResolver().query(data.getData(), null, null, null, null, null);
+                         Cursor cursor = getContentResolver().query(data.getData(), null, null, null, null, null);
                          if (cursor != null && cursor.moveToFirst()) {
-                              filePath = cursor.getString(cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME));
+                              filePath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                               filePath = "//sdcard//Download//" + filePath;
                          }
                          throw new RuntimeException(filePath);
@@ -125,26 +141,33 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
 
           Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
           intent.addCategory(Intent.CATEGORY_OPENABLE);
-          intent.setDataAndType(android.net.Uri.parse("//sdcard//Download//"), "*/*");
+          intent.setDataAndType(Uri.parse("//sdcard//Download//"), "*/*");
           try {
                mainActivityInstance.startActivityForResult(Intent.createChooser(intent, "Select a Text File of Your Keys to Upload!"), FILE_SELECT_CODE);
-          } catch (android.content.ActivityNotFoundException e) {
-               android.util.Log.e(TAG, "Unable to choose external file: " + e.getMessage());
+          } catch (ActivityNotFoundException e) {
+               Log.e(TAG, "Unable to choose external file: " + e.getMessage());
                return null;
           }
           String filePathSelection = "";
           try {
-               android.os.Looper.loop();
+               Looper.loop();
           } catch (RuntimeException rte) {
                filePathSelection = rte.getMessage().split("java.lang.RuntimeException: ")[1];
-               android.util.Log.i(TAG, "User Selected Data File: " + filePathSelection);
+               Log.i(TAG, "User Selected Data File: " + filePathSelection);
           }
           return new File(filePathSelection);
 
      }
 
      private void ClearActiveDisplayWindow() {
-          // TODO
+          TextView tvTagDesc = (TextView) findViewById(R.id.deviceStatusBarTagType);
+          tvTagDesc.setText("");
+          TextView tvTagUID = (TextView) findViewById(R.id.deviceStatusBarUID);
+          tvTagUID.setText("");
+          TextView tvTagSizes = (TextView) findViewById(R.id.deviceStatusBarSizeDims);
+          tvTagSizes.setText("");
+          LinearLayout mainScrollerLayout = (LinearLayout) findViewById(R.id.mainDisplayItemsListLayout);
+          mainScrollerLayout.removeAllViews();
      }
 
      private void DisplayNewMFCTag(MifareClassicTag mfcTagData) {
@@ -153,19 +176,26 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
           }
           ClearActiveDisplayWindow();
           // display a quick notice to the user of the more detailed tag information from the header sector:
-          String toastNoticeMsg = String.format(java.util.Locale.US, "New Tag Found!\n\nATQA: %s\nSAK: %s\nATS: %s",
+          String toastNoticeMsg = String.format(Locale.US, "New Tag Found!\n\nATQA: %s\nSAK: %s\nATS: %s",
                                                 mfcTagData.GetATQA(), mfcTagData.GetSAK(), mfcTagData.GetATS());
-          android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, toastNoticeMsg, android.widget.Toast.LENGTH_LONG);
+          Toast toastDisplay = Toast.makeText(this, toastNoticeMsg, Toast.LENGTH_LONG);
           toastDisplay.show();
           // next, display the quick summary tag stats at the top of the screen below the toolbar:
-          android.widget.TextView tvTagDesc = (android.widget.TextView) findViewById(R.id.deviceStatusBarTagType);
+          TextView tvTagDesc = (TextView) findViewById(R.id.deviceStatusBarTagType);
           tvTagDesc.setText(mfcTagData.GetTagType());
-          android.widget.TextView tvTagUID = (android.widget.TextView) findViewById(R.id.deviceStatusBarUID);
+          TextView tvTagUID = (TextView) findViewById(R.id.deviceStatusBarUID);
           tvTagUID.setText(mfcTagData.GetTagUID());
-          android.widget.TextView tvTagSizes = (android.widget.TextView) findViewById(R.id.deviceStatusBarSizeDims);
+          TextView tvTagSizes = (TextView) findViewById(R.id.deviceStatusBarSizeDims);
           tvTagSizes.setText(mfcTagData.GetTagSizeSpecString());
           // loop and add each sector to the linear layout within the scroll viewer:
-          // TODO
+          LinearLayout mainScrollerLayout = (LinearLayout) findViewById(R.id.mainDisplayItemsListLayout);
+          LayoutInflater sectorLayoutInflater = getLayoutInflater();
+          for(int sec = 0; sec < mfcTagData.GetTagSectors(); sec++) {
+               MifareClassicTag.MFCSector nextSectorData = mfcTagData.GetSectorByIndex(sec);
+               byte[] sectorBytes = new byte[nextSectorData.sectorSize];
+               LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec).GetDisplayLayout();
+               mainScrollerLayout.addView(sectorDisplay);
+          }
      }
 
      private static final int TAG_SCANNING_TIME = 5000;
@@ -175,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                MifareClassicToolLibrary.StopLiveTagScanning(MainActivity.mainActivityInstance);
                MainActivity.mainActivityInstance.currentlyTagScanning = false;
                if(!MainActivity.mainActivityInstance.newMFCTagFound) {
-                    android.widget.Toast toastDisplay = android.widget.Toast.makeText(com.maxieds.ParklinkMCTLibraryDemo.MainActivity.mainActivityInstance, "No Mifare Classic tags found!", android.widget.Toast.LENGTH_SHORT);
+                    Toast toastDisplay = Toast.makeText(MainActivity.mainActivityInstance, "No Mifare Classic tags found!", Toast.LENGTH_SHORT);
                     toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
                     toastDisplay.show();
                }
@@ -193,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
           if (activeMFCTag == null) {
                return;
           }
-          String outfileBasePath = String.format(java.util.Locale.ENGLISH, "MifareClassic%s-tagdump-%s",
+          String outfileBasePath = String.format(Locale.ENGLISH, "MifareClassic%s-tagdump-%s",
                MifareClassicTag.GetTagByteCountString(activeMFCTag.GetTagSize()),
                MCTUtils.GetTimestamp().replace(":", ""));
           for (int ext = 0; ext < 2; ext++) {
@@ -213,8 +243,8 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                     } else {
                          activeMFCTag.ExportToBinaryDumpFile(outfile.getAbsolutePath());
                     }
-               } catch (java.io.IOException ioe) {
-                    android.util.Log.e(TAG, ioe.getStackTrace().toString());
+               } catch (IOException ioe) {
+                    Log.e(TAG, ioe.getStackTrace().toString());
                     return;
                }
           }
@@ -233,6 +263,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
                ClearActiveDisplayWindow();
                activeMFCTag = null;
           }
+          ClearActiveDisplayWindow();
      }
 
      protected void ActionButtonCheckForMFCSupport(View btnView) {
@@ -251,7 +282,7 @@ public class MainActivity extends AppCompatActivity implements com.maxieds.Mifar
           else {
                toastStatusMsg += "NFC is currently DISABLED on the device for tag reading.";
           }
-          android.widget.Toast toastDisplay = android.widget.Toast.makeText(this, toastStatusMsg, android.widget.Toast.LENGTH_SHORT);
+          Toast toastDisplay = Toast.makeText(this, toastStatusMsg, Toast.LENGTH_SHORT);
           toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
      }
 
