@@ -2,8 +2,8 @@ package com.maxieds.ParklinkMCTLibraryDemo;
 
 import android.os.Bundle;
 import android.util.Log;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.app.Activity;
+import android.widget.Toolbar;
 import android.view.View;
 import android.content.Intent;
 import android.os.Handler;
@@ -32,7 +32,7 @@ import com.maxieds.MifareClassicToolLibrary.MifareClassicToolLibrary;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicDataInterface;
 
-public class MainActivity extends AppCompatActivity implements MifareClassicDataInterface {
+public class MainActivity extends Activity implements MifareClassicDataInterface {
 
      public static final String TAG = MainActivity.class.getSimpleName();
 
@@ -41,21 +41,34 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      private static boolean newMFCTagFound = false;
      private static MifareClassicTag activeMFCTag = null;
 
+     private static final int LAUNCH_DEFAULT_TAG_DELAY = 2000;
+     private static Handler delayInitialTagDisplayHandler = new Handler();
+     private static Runnable delayInitialTagDisplayRunnable = new Runnable() {
+          public void run() {
+               if (MainActivity.mainActivityInstance == null) {
+                    MainActivity.delayInitialTagDisplayHandler.postDelayed(MainActivity.delayInitialTagDisplayRunnable, MainActivity.LAUNCH_DEFAULT_TAG_DELAY / 2);
+                    return;
+               }
+               activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(R.raw.mfc1k_random_content_fixed_keys);
+               MainActivity.mainActivityInstance.DisplayNewMFCTag(activeMFCTag);
+          }
+     };
+
      @Override
      protected void onCreate(Bundle savedInstanceState) {
 
           super.onCreate(savedInstanceState);
           setContentView(R.layout.activity_main);
-          mainActivityInstance = this;
           ConfigureMCTLibrary();
 
           Toolbar toolbar = (Toolbar) findViewById(R.id.toolbarActionBar);
-          setSupportActionBar(toolbar);
+          setActionBar(toolbar);
           toolbar.setSubtitle(String.format(Locale.US, "App v%d (%d) / Lib v%s", BuildConfig.VERSION_NAME,
                                             BuildConfig.VERSION_CODE, MifareClassicToolLibrary.GetLibraryVersion()));
 
-          activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(R.raw.mfc1k_random_content_fixed_keys);
-          DisplayNewMFCTag(activeMFCTag);
+          // set this last so we return immediately after it becomes non-NULL:
+          delayInitialTagDisplayHandler.postDelayed(delayInitialTagDisplayRunnable, LAUNCH_DEFAULT_TAG_DELAY);
+          mainActivityInstance = this;
 
      }
 
