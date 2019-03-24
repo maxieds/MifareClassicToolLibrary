@@ -9,9 +9,9 @@
     <color name="deviceStatusBarBackgroundColor">#004040</color>
     <color name="deviceStatusBarHeaderTextColor">#4da6a6</color>
     <color name="deviceStatusBarInfoTextColor">#b2d8d8</color>
-    <color name="actionBarBackgroundColor">#ffffff</color>
+    <color name="actionBarBackgroundColor">#001a1a</color>
     <color name="actionBarTitleTextColor">#ffffff</color>
-    <color name="actionBarSubtitleTextColor">#001a1a</color>
+    <color name="actionBarSubtitleTextColor">#ffffff</color>
     <color name="transparent">#00ff0000</color>
 
 </resources>
