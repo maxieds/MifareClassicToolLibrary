@@ -20,6 +20,8 @@ import android.content.ActivityNotFoundException;
 import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toolbar;
+import android.widget.Spinner;
+import android.support.v7.app.AlertDialog;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
           Toolbar toolbar = findViewById(R.id.toolbarActionBar);
           toolbar.setLogo(R.drawable.main_action_bar_logo_icon);
-          toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) / Lib %s", BuildConfig.VERSION_NAME,
+          toolbar.setSubtitle(String.format(Locale.US, "App: v%s (%s) / Lib: %s", BuildConfig.VERSION_NAME,
                                             BuildConfig.VERSION_CODE, MifareClassicToolLibrary.GetLibraryVersion()));
           setActionBar(toolbar);
 
@@ -170,11 +172,11 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
      private void ClearActiveDisplayWindow() {
           TextView tvTagDesc = (TextView) findViewById(R.id.deviceStatusBarTagType);
-          tvTagDesc.setText("");
+          tvTagDesc.setText("<NO-DATA>");
           TextView tvTagUID = (TextView) findViewById(R.id.deviceStatusBarUID);
-          tvTagUID.setText("");
+          tvTagUID.setText("<NO-DATA>");
           TextView tvTagSizes = (TextView) findViewById(R.id.deviceStatusBarSizeDims);
-          tvTagSizes.setText("");
+          tvTagSizes.setText("<NO-DATA>");
           LinearLayout mainScrollerLayout = (LinearLayout) findViewById(R.id.mainDisplayItemsListLayout);
           mainScrollerLayout.removeAllViews();
      }
@@ -188,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
           ClearActiveDisplayWindow();
           // display a quick notice to the user of the more detailed tag information from the header sector:
-          String toastNoticeMsg = String.format(Locale.US, "New Tag Found!\n\nATQA: %s\nSAK: %s\nATS: %s",
+          String toastNoticeMsg = String.format(Locale.US, "New Tag Found!\nATQA: %s\nSAK: %s\nATS: %s",
                                                 mfcTagData.GetATQA(), mfcTagData.GetSAK(), mfcTagData.GetATS());
           Toast toastDisplay = Toast.makeText(this, toastNoticeMsg, Toast.LENGTH_LONG);
           toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
@@ -208,6 +210,23 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec, sectorReadFailed).GetDisplayLayout();
                mainScrollerLayout.addView(sectorDisplay);
           }
+     }
+
+     public void ActionButtonDisplayAppAboutInfo(View btnView) {
+          AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+          dialog.setIcon(R.drawable.about_gear_icon);
+          dialog.setTitle(R.string.aboutAppTitle);
+          dialog.setMessage(R.string.aboutAppDesc);
+          dialog.setPositiveButton("Done", null);
+          dialog.show();
+     }
+
+     public void ActionButtonLoadDumpImageFromFile(View btnView) {
+          Spinner rawFileSrcSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
+          String rawFilePath = rawFileSrcSpinner.getSelectedItem().toString();
+          int rawFileResID = getResources().getIdentifier(rawFilePath, "raw", getPackageName());
+          MainActivity.mainActivityInstance.activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(rawFileResID);
+          MainActivity.mainActivityInstance.DisplayNewMFCTag(activeMFCTag);
      }
 
      private static final int TAG_SCANNING_TIME = 5000;
@@ -270,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      }
 
      public void ActionButtonSetKeys(View btnView) {
-          LoadKeysDialog loadKeysDialog = new LoadKeysDialog();
+          LoadKeysDialog loadKeysDialog = new LoadKeysDialog(this);
           loadKeysDialog.BuildDialog();
           loadKeysDialog.Show();
      }

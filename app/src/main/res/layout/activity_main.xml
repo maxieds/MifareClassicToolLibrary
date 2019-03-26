@@ -26,106 +26,126 @@
         android:layout_height="4dp"
         android:background="@color/deviceStatusBarDividerColor" />
 
-    <GridLayout
-        android:layout_width="fill_parent"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="0dp"
+        android:orientation="horizontal"
         android:background="@color/deviceStatusBarBackgroundColor"
-        android:columnCount="3"
         android:padding="0dp"
-        android:rowCount="3">
+        >
 
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:paddingRight="4dp"
-            android:paddingLeft="3dp"
-            android:src="@drawable/tag_icon" />
-
-        <TextView
-            android:layout_width="wrap_content"
+        <GridLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="0.85"
+            android:layout_marginBottom="0dp"
             android:background="@color/deviceStatusBarBackgroundColor"
-            android:paddingRight="10dp"
-            android:text="TAG: "
-            android:textColor="@color/deviceStatusBarHeaderTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold"
+            android:columnCount="3"
+            android:padding="0dp"
+            android:rowCount="3">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:paddingRight="4dp"
+                android:paddingLeft="3dp"
+                android:src="@drawable/tag_icon" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/deviceStatusBarBackgroundColor"
+                android:paddingRight="10dp"
+                android:text="TAG: "
+                android:textColor="@color/deviceStatusBarHeaderTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold"
+                />
+
+            <TextView
+                android:id="@+id/deviceStatusBarTagType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/deviceStatusBarBackgroundColor"
+                android:paddingRight="10dp"
+                android:text=""
+                android:textColor="@color/deviceStatusBarInfoTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold"
+                />
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:paddingRight="4dp"
+                android:paddingLeft="3dp"
+                android:src="@drawable/uid_icon" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/deviceStatusBarBackgroundColor"
+                android:paddingRight="10dp"
+                android:text="UID: "
+                android:textColor="@color/deviceStatusBarHeaderTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold"
+                />
+
+            <TextView
+                android:id="@+id/deviceStatusBarUID"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/deviceStatusBarBackgroundColor"
+                android:paddingRight="10dp"
+                android:text=""
+                android:textColor="@color/deviceStatusBarInfoTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold"
+                />
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:paddingRight="4dp"
+                android:paddingLeft="3dp"
+                android:src="@drawable/tag_size_icon" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/deviceStatusBarBackgroundColor"
+                android:paddingRight="10dp"
+                android:text="DIM: "
+                android:textColor="@color/deviceStatusBarHeaderTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold"
+                />
+
+            <TextView
+                android:id="@+id/deviceStatusBarSizeDims"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/deviceStatusBarBackgroundColor"
+                android:paddingRight="10dp"
+                android:text=""
+                android:textColor="@color/deviceStatusBarInfoTextColor"
+                android:textSize="12sp"
+                android:textStyle="normal|bold"
+                />
+
+        </GridLayout>
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.15"
+            android:drawableLeft="@drawable/about_gear_icon"
+            android:background="@color/deviceStatusBarBackgroundColor"
+            android:onClick="ActionButtonDisplayAppAboutInfo"
             />
 
-        <TextView
-            android:id="@+id/deviceStatusBarTagType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/deviceStatusBarBackgroundColor"
-            android:paddingRight="10dp"
-            android:text=""
-            android:textColor="@color/deviceStatusBarInfoTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold"
-            />
-
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:paddingRight="4dp"
-            android:paddingLeft="3dp"
-            android:src="@drawable/uid_icon" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/deviceStatusBarBackgroundColor"
-            android:paddingRight="10dp"
-            android:text="UID: "
-            android:textColor="@color/deviceStatusBarHeaderTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold"
-            />
-
-        <TextView
-            android:id="@+id/deviceStatusBarUID"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/deviceStatusBarBackgroundColor"
-            android:paddingRight="10dp"
-            android:text=""
-            android:textColor="@color/deviceStatusBarInfoTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold"
-            />
-
-        <ImageView
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:paddingRight="4dp"
-            android:paddingLeft="3dp"
-            android:src="@drawable/tag_size_icon" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/deviceStatusBarBackgroundColor"
-            android:paddingRight="10dp"
-            android:text="DIM: "
-            android:textColor="@color/deviceStatusBarHeaderTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold"
-            />
-
-        <TextView
-            android:id="@+id/deviceStatusBarSizeDims"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/deviceStatusBarBackgroundColor"
-            android:paddingRight="10dp"
-            android:text=""
-            android:textColor="@color/deviceStatusBarInfoTextColor"
-            android:textSize="12sp"
-            android:textStyle="normal|bold"
-            />
-
-    </GridLayout>
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
@@ -154,6 +174,74 @@
         />
 
     </ScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:background="@color/deviceStatusBarDividerColor" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/deviceStatusBarBackgroundColor"
+        android:padding="2dp"
+        android:drawableLeft="@drawable/load_from_file_icon"
+        android:drawablePadding="6dp"
+        android:text="Load MFC1K Dump Data From Local File: "
+        android:textColor="@color/deviceStatusBarHeaderTextColor"
+        android:textSize="16sp"
+        android:textStyle="normal|bold"
+        android:fontFamily="sans-serif"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/colorAccent"
+        >
+
+        <Spinner
+            android:id="@+id/dumpImageRawFilesSrcSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.85"
+            android:entries="@array/DumpImageRawFiles"
+            android:gravity="right|center_vertical"
+            android:popupBackground="?colorAccentHighlight"
+            android:spinnerMode="dialog"
+            />
+
+        <Button
+            style="@style/GridButtons"
+            android:layout_weight="0.15"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="ActionButtonLoadDumpImageFromFile"
+            android:drawableLeft="@drawable/load_from_file_icon"
+            android:text="Load Tag ..." />
+
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:background="@color/deviceStatusBarDividerColor" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/deviceStatusBarBackgroundColor"
+        android:padding="2dp"
+        android:drawableLeft="@drawable/android_operations_icon"
+        android:drawablePadding="6dp"
+        android:text="Demo Operations: "
+        android:textColor="@color/deviceStatusBarHeaderTextColor"
+        android:textSize="16sp"
+        android:textStyle="normal|bold"
+        android:fontFamily="sans-serif"
+        />
 
     <View
         android:layout_width="match_parent"

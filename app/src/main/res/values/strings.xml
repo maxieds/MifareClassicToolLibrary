@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">MCT Library Demo</string>
+    <string name="app_name">Parklink MCT Library Demo</string>
     <string name="action_settings">Settings</string>
 
     <string name="loadKeysDialogTitle">"Choose preset key A/B's for testing ..."</string>
@@ -8,4 +8,22 @@
                                       to try to authenticate with the KeyA/KeyB settings on
                                       each sector of the Mifare Classic tags.
     </string>
+
+    <string name="aboutAppTitle">About this application ...</string>
+    <string name="aboutAppDesc">This application is an Android demo of the Mifare Classic Tool Library
+                                developed by Parklink (written by Maxie D. Schmidt -- maxieds@gmail.com). </string>
+
+    <string-array name="DumpImageRawFiles">
+        <item>mfc1k_random_content_fixed_keys</item>
+        <item>mfc1k_0895611d863d_comelit</item>
+        <item>mfc1k_319268e5e6e4_urmet</item>
+        <item>mfc1k_413637930602_infratone</item>
+        <item>mfc1k_5e986285e613_cdvi</item>
+        <item>mfc1k_8de765ee6153_hexact</item>
+        <item>mfc1k_9862453e4061_corrupted</item>
+        <item>mfc1k_9862453e4061_halfcorrupted</item>
+        <item>mfc1k_9862453e4061_original</item>
+        <item>mfc1k_d7456978e639_noralsy</item>
+    </string-array>
+
 </resources>

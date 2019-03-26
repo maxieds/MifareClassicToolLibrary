@@ -82,7 +82,11 @@ public class LoadKeysDialog {
           presetTestKeys.clear();
      }
 
-     public LoadKeysDialog() {
+     public LoadKeysDialog(Activity mainActivityContext) {
+          if(!staticVariablesInit) {
+               initStaticVariablesBeforeClass();
+          }
+          mainActivityRef = mainActivityContext;
           displayAddKeysDialog = null;
      }
 
@@ -96,16 +100,16 @@ public class LoadKeysDialog {
           }
           dialog.setView(dialogKeyDisplaySpinner);
           dialog.setMessage(R.string.loadKeysDialogDesc);
-          dialog.setNegativeButton("Done", null);
+          dialog.setPositiveButton("Done", null);
           dialog.setNeutralButton("Load Keys", null);
-          dialog.setPositiveButton("Random Key", null);
+          dialog.setNegativeButton("Random Key", null);
           dialog.setInverseBackgroundForced(true);
           displayAddKeysDialog = dialog.create();
           displayAddKeysDialog.setOnShowListener(new DialogInterface.OnShowListener() {
 
                @Override
                public void onShow(DialogInterface dialog) {
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
                          @Override
                          public void onClick(View view) {
                               String randomKey = MCTUtils.BytesToHexString(MCTUtils.GetRandomBytes(6));
