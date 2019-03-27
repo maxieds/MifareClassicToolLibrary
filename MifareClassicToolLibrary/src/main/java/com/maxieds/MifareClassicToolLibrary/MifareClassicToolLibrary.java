@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
 import android.graphics.drawable.Drawable;
-import android.content.res.ColorStateList;
 import android.widget.TextView;
 
 import java.io.File;
@@ -28,6 +27,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.Locale;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 import com.maxieds.MifareClassicToolLibrary.R;
 
@@ -219,18 +220,21 @@ public class MifareClassicToolLibrary {
              String resFilePath = keyFiles[kidx];
              int fileRes = appContext.getResources().getIdentifier(resFilePath, "raw", appContext.getPackageName());
              InputStream rawFileStream = appContext.getResources().openRawResource(fileRes);
-             int lineByteCount = 0, MAX_LINE_SIZE = 128;
-             byte[] lineBytes = new byte[MAX_LINE_SIZE];
+             BufferedReader textFileReader = new BufferedReader(new InputStreamReader(rawFileStream));
              try {
                  while (true) {
-                     lineByteCount = rawFileStream.read(lineBytes, 0, MAX_LINE_SIZE);
-                     if (lineByteCount == 0) {
+                     String textLine = textFileReader.readLine();
+                     if (textLine == null) {
                          break;
                      }
-                     if(lineBytes[0] != '#' && lineBytes[0] != '\n') {
-                         keysList.add(new String(lineBytes, 0, lineByteCount));
+                     else if(textLine.length() == 0) {
+                          continue;
+                     }
+                     else if(textLine.charAt(0) != '#' && textLine.charAt(0) != '\n') {
+                         keysList.add(textLine);
                      }
                  }
+                 textFileReader.close();
                  rawFileStream.close();
              } catch(IOException ioe) {
                  ioe.printStackTrace();
@@ -238,7 +242,9 @@ public class MifareClassicToolLibrary {
              }
          }
          standardKeys = new String[keysList.size()];
-         keysList.toArray(standardKeys);
+         for(int s = 0; s < keysList.size(); s++) {
+              standardKeys[s] = keysList.get(s);
+         }
          return true;
     }
 

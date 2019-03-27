@@ -25,6 +25,8 @@ import android.support.v7.app.AlertDialog;
 import android.widget.ImageView;
 import android.os.AsyncTask;
 import android.app.Activity;
+import android.Manifest;
+import android.content.pm.PackageManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
      };
 
+     final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
+
      @Override
      protected void onCreate(Bundle savedInstanceState) {
 
@@ -76,6 +80,17 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                             BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
                                             MifareClassicToolLibrary.GetLibraryVersion()));
           setActionBar(toolbar);
+
+          int hasReadExternalPermission = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+          if (hasReadExternalPermission != PackageManager.PERMISSION_GRANTED) {
+               String[] reqestedPermissions = new String[] { android.Manifest.permission.READ_EXTERNAL_STORAGE };
+               requestPermissions(reqestedPermissions, REQUEST_CODE_ASK_PERMISSIONS);
+          }
+          int hasWriteExternalPermission = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+          if (hasWriteExternalPermission != PackageManager.PERMISSION_GRANTED) {
+               String[] reqestedPermissions = new String[] { android.Manifest.permission.WRITE_EXTERNAL_STORAGE };
+               requestPermissions(reqestedPermissions, REQUEST_CODE_ASK_PERMISSIONS);
+          }
 
           currentlyTagScanning = false;
           SetActiveTagScanningIcon(false);
@@ -225,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          }
                          throw new RuntimeException(filePath);
                     }
-                    break;
+                    return;
           }
           super.onActivityResult(requestCode, resultCode, data);
      }

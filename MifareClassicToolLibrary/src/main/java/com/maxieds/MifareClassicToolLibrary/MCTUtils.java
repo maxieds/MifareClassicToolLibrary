@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class MCTUtils {
 
@@ -72,29 +74,40 @@ public class MCTUtils {
         return randomBytes;
     }
 
-    public static String[] ReadKeysFromTextFile(File keyFile) {
-        if(keyFile == null || !keyFile.exists()) {
+    public static String[] ReadKeysFromTextFile(InputStream keyDataStream) {
+        if(keyDataStream == null) {
             return null;
         }
-        java.util.List keysList = new ArrayList<String>();
-        byte[] textLineBytes = new byte[256];
+        List<String> keysList = new ArrayList<String>();
+        String textLine;
         try {
-            java.io.InputStream keyDataStream = new FileInputStream(keyFile);
+            InputStreamReader keyInputStreamReader = new InputStreamReader(keyDataStream);
+            BufferedReader textFileReader = new BufferedReader(keyInputStreamReader);
             while (true) {
-                int lineByteCount = keyDataStream.read(textLineBytes, 0, 256);
-                if (lineByteCount == 0) {
+                textLine = textFileReader.readLine();
+                if (textLine == null) {
                     break;
                 }
-                if(textLineBytes[0] != '#' && textLineBytes[0] != '\n') {
-                    keysList.add(new String(textLineBytes, 0, lineByteCount));
+                else if(textLine.length() == 0) {
+                     continue;
+                }
+                else if(textLine.charAt(0) != '#' && textLine.charAt(0) != '\n') {
+                     Log.i(TAG, textLine);
+                     keysList.add(textLine);
                 }
             }
+            textFileReader.close();
+            keyInputStreamReader.close();
             keyDataStream.close();
         } catch(IOException ioe) {
             ioe.printStackTrace();
             return null;
         }
-        return Arrays.copyOf(keysList.toArray(), keysList.size(), String[].class);
+        String[] keysStringArray = new String[keysList.size()];
+        for(int s = 0; s < keysList.size(); s++) {
+            keysStringArray[s] = keysList.get(s);
+        }
+        return keysStringArray;
     }
 
     public static String GetTimestamp() {

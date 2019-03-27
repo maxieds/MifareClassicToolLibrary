@@ -30,10 +30,10 @@ android {
     defaultConfig {
 
         applicationId "com.maxieds.ParklinkMCTLibraryDemo"
-        minSdkVersion 26
+        minSdkVersion 24
         targetSdkVersion 26
-        versionCode 6
-        versionName "1.0.6"
+        versionCode 7
+        versionName "1.0.7"
         //testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "BUILD_TIMESTAMP", "\"" + getDateTimestamp() + "\""

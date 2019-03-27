@@ -6,10 +6,10 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.content.DialogInterface;
 import android.widget.BaseAdapter;
-import android.view.ViewGroup;
+import android.content.Context;
 import android.view.View;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -24,19 +24,13 @@ public class LoadKeysDialog {
      private static List<String> presetTestKeys;
      private static Activity mainActivityRef;
      private AlertDialog displayAddKeysDialog;
-     private static Spinner dialogKeyDisplaySpinner;
-     private static ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter;
+     //private static Spinner dialogKeyDisplaySpinner;
+     //private static ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter;
      private static boolean staticVariablesInit = false;
 
      public static void initStaticVariablesBeforeClass() {
           presetTestKeys = new ArrayList<String>();
           mainActivityRef = MainActivity.mainActivityInstance;
-          dialogKeyDisplaySpinner = new Spinner(mainActivityRef);
-          dialogKeyDisplaySpinner.setPadding(20, 15, 20, 5);
-          dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
-               mainActivityRef, android.R.layout.simple_spinner_item, presetTestKeys);
-          dialogKeyDisplaySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-          dialogKeyDisplaySpinner.setAdapter(dialogKeyDisplaySpinnerAdapter);
           staticVariablesInit = true;
      }
 
@@ -67,13 +61,16 @@ public class LoadKeysDialog {
           if(keyData == null) {
                return false;
           }
+          List<String> keyDataCopy = new ArrayList<String>();
+          keyDataCopy.addAll(presetTestKeys);
+          presetTestKeys.clear();
           for(int k = 0; k < keyData.length; k++) {
                String nextKey = keyData[k];
                if(MCTUtils.IsHexAnd6Byte(nextKey)) {
-                    presetTestKeys.add(0, nextKey);
-                    ((BaseAdapter) dialogKeyDisplaySpinnerAdapter).notifyDataSetChanged();
+                    keyDataCopy.add(0, nextKey.toUpperCase());
                }
           }
+          presetTestKeys.addAll(keyDataCopy);
           return true;
      }
 
@@ -94,17 +91,27 @@ public class LoadKeysDialog {
 
      public boolean BuildDialog() {
 
-          AlertDialog.Builder dialog = new AlertDialog.Builder(mainActivityRef);
+          AlertDialog.Builder dialog = new AlertDialog.Builder((Context) mainActivityRef);
           dialog.setIcon(R.drawable.add_key_dialog_icon);
           dialog.setTitle(R.string.loadKeysDialogTitle);
-          if(dialogKeyDisplaySpinner.getParent() != null) {
-               ((ViewGroup) dialogKeyDisplaySpinner.getParent()).removeView(dialogKeyDisplaySpinner);
-          }
-          dialog.setView(dialogKeyDisplaySpinner);
+
+          //if(dialogKeyDisplaySpinner.getParent() != null) {
+          //     ((ViewGroup) dialogKeyDisplaySpinner.getParent()).removeView(dialogKeyDisplaySpinner);
+          //}
+          //List<String> testKeysCopy = presetTestKeys;
+          Spinner dialogKeyDisplaySpinner = new Spinner((Context) mainActivityRef);
+          dialogKeyDisplaySpinner.setPadding(20, 15, 20, 5);
+          ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
+               mainActivityRef, android.R.layout.simple_spinner_item, presetTestKeys);
+          dialogKeyDisplaySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+          dialogKeyDisplaySpinner.setAdapter(dialogKeyDisplaySpinnerAdapter);
+          final Spinner dialogKeyDisplaySpinnerFinal = dialogKeyDisplaySpinner;
+          dialog.setView(dialogKeyDisplaySpinnerFinal);
+
           dialog.setMessage(R.string.loadKeysDialogDesc);
           dialog.setPositiveButton("Done", null);
-          dialog.setNeutralButton("Load Keys", null);
-          dialog.setNegativeButton("Random Key", null);
+          dialog.setNeutralButton("Preset Keys", null);
+          dialog.setNegativeButton("Standard Keys", null);
           dialog.setInverseBackgroundForced(true);
           displayAddKeysDialog = dialog.create();
           displayAddKeysDialog.setOnShowListener(new DialogInterface.OnShowListener() {
@@ -120,14 +127,13 @@ public class LoadKeysDialog {
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
                          @Override
                          public void onClick(View view) {
-                              //MifareClassicToolLibrary.LoadStandardKeySets(true);
-                              //String[] standardKeysFull = MifareClassicToolLibrary.GetStandardAllKeys();
-                              //LoadKeysDialog.AppendPresetKeys(standardKeysFull);
-                              String randomKey = MCTUtils.BytesToHexString(MCTUtils.GetRandomBytes(6));
-                              LoadKeysDialog.AppendPresetKeys(new String[]{ randomKey });
+                              MifareClassicToolLibrary.LoadStandardKeySets(true);
+                              String[] standardKeysFull = MifareClassicToolLibrary.GetStandardAllKeys();
+                              LoadKeysDialog.AppendPresetKeys(standardKeysFull);
+                              ((BaseAdapter) dialogKeyDisplaySpinnerFinal.getAdapter()).notifyDataSetChanged();
                          }
                     });
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(12);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(10);
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setCompoundDrawablesWithIntrinsicBounds(
                          mainActivityRef.getResources().getDrawable(R.drawable.load_keys_from_file_icon),
                          null,
@@ -137,19 +143,20 @@ public class LoadKeysDialog {
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener() {
                          @Override
                          public void onClick(View view) {
-                              File keyDataFile = MainActivity.GetUserExternalFileSelection();
-                              String[] keyDataArray = MCTUtils.ReadKeysFromTextFile(keyDataFile);
+                              InputStream keyDataStream = mainActivityRef.getResources().openRawResource(R.raw.preset_sample_keys);
+                              String[] keyDataArray = MCTUtils.ReadKeysFromTextFile(keyDataStream);
                               LoadKeysDialog.AppendPresetKeys(keyDataArray);
+                              ((BaseAdapter) dialogKeyDisplaySpinnerFinal.getAdapter()).notifyDataSetChanged();
                          }
                     });
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextSize(12);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextSize(10);
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setCompoundDrawablesWithIntrinsicBounds(
                          mainActivityRef.getResources().getDrawable(R.drawable.done_button_icon),
                          null,
                          null,
                          null
                     );
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(12);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(10);
                }
           });
           return displayAddKeysDialog != null;
