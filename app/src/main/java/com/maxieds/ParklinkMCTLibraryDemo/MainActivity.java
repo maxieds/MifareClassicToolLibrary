@@ -54,6 +54,17 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      @Override
      protected void onCreate(Bundle savedInstanceState) {
 
+          if(!isTaskRoot()) {
+               Log.w(TAG, "ReLaunch Intent Action: " + getIntent().getAction());
+               final Intent intent = getIntent();
+               final String intentAction = intent.getAction();
+               if (intentAction != null && (intentAction.equals(NfcAdapter.ACTION_TECH_DISCOVERED) ||
+                    intentAction.equals(NfcAdapter.ACTION_TAG_DISCOVERED))) {
+                    Log.w(TAG, "onCreate(): Main Activity is not the root.  Finishing Main Activity instead of re-launching.");
+                    finish();
+                    return;
+               }
+          }
           super.onCreate(savedInstanceState);
           mainActivityInstance = this;
           setContentView(R.layout.activity_main);
@@ -116,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          DisplayNewMFCTag(activeMFCTag);
                          newMFCTagFound = true;
                     } catch(MifareClassicLibraryException mfcLibExcpt) {
-                         Log.w(TAG, mfcLibExcpt.getStackTrace().toString());
+                         mfcLibExcpt.printStackTrace();
                          String toastMsg = mfcLibExcpt.ToString();
                          Toast toastDisplay = Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT);
                          toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
@@ -233,8 +244,10 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      private static Handler tagScanHandler = new Handler();
      private static Runnable tagScanRunnable = new Runnable() {
           public void run() {
-               MifareClassicToolLibrary.StopLiveTagScanning(MainActivity.mainActivityInstance);
-               MainActivity.mainActivityInstance.currentlyTagScanning = false;
+               if(MainActivity.mainActivityInstance.currentlyTagScanning) {
+                    MifareClassicToolLibrary.StopLiveTagScanning(MainActivity.mainActivityInstance);
+                    MainActivity.mainActivityInstance.currentlyTagScanning = false;
+               }
                if(!MainActivity.mainActivityInstance.newMFCTagFound) {
                     Toast toastDisplay = Toast.makeText(MainActivity.mainActivityInstance, "No Mifare Classic tags found!", Toast.LENGTH_SHORT);
                     toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
@@ -281,7 +294,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          activeMFCTag.ExportToBinaryDumpFile(outfile.getAbsolutePath());
                     }
                } catch (IOException ioe) {
-                    Log.e(TAG, ioe.getStackTrace().toString());
+                    ioe.printStackTrace();
                     return;
                }
           }

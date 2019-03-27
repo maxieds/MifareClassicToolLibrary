@@ -72,6 +72,15 @@ public class MifareClassicTag {
               if(mfcTag == null) {
                    throw new MifareClassicLibraryException(NFCErrorException);
               }
+              try {
+                   mfcTag.connect();
+                   if(!mfcTag.isConnected()) {
+                        return 0;
+                   }
+              } catch(IOException ioe) {
+                   ioe.printStackTrace();
+                   return 0;
+              }
               // try to "crack" the keys with a preset list of values before we proceed:
               boolean authedKeyA = false, authedKeyB = false;
               for(int kidx = 0; kidx < trialKeysList.length; kidx++) {
@@ -91,7 +100,7 @@ public class MifareClassicTag {
                              break;
                         }
                    } catch(IOException ioe) {
-                        Log.e(TAG, ioe.getStackTrace().toString());
+                        ioe.printStackTrace();
                         throw new MifareClassicLibraryException(NFCErrorException);
                    }
               }
@@ -103,7 +112,7 @@ public class MifareClassicTag {
                         mfcTag.authenticateSectorWithKeyB(sectorAddress, keyB);
                    }
               } catch(IOException ioe) {
-                   Log.e(TAG, ioe.getStackTrace().toString());
+                   ioe.printStackTrace();
                    throw new MifareClassicLibraryException(NFCErrorException);
               }
               int totalBytesRead = 0;
@@ -123,6 +132,11 @@ public class MifareClassicTag {
                    } catch(Exception ioe) {
                         throw new MifareClassicLibraryException(PartialReadException);
                    }
+              }
+              try {
+                   mfcTag.close();
+              } catch(IOException ioe) {
+                   ioe.printStackTrace();
               }
               return totalBytesRead;
          }
@@ -525,7 +539,7 @@ public class MifareClassicTag {
                     return null;
                }
           } catch(IOException ioe) {
-               Log.e(TAG, "ERROR: " + ioe.getStackTrace().toString());
+               ioe.printStackTrace();
                return null;
           }
           // setup the individual sector data:

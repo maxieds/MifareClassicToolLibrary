@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import com.maxieds.ParklinkMCTLibraryDemo.R;
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
+import  com.maxieds.MifareClassicToolLibrary.MifareClassicToolLibrary;
 
 public class LoadKeysDialog {
 
@@ -31,6 +32,7 @@ public class LoadKeysDialog {
           presetTestKeys = new ArrayList<String>();
           mainActivityRef = MainActivity.mainActivityInstance;
           dialogKeyDisplaySpinner = new Spinner(mainActivityRef);
+          dialogKeyDisplaySpinner.setPadding(20, 15, 20, 5);
           dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
                mainActivityRef, android.R.layout.simple_spinner_item, presetTestKeys);
           dialogKeyDisplaySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -68,7 +70,6 @@ public class LoadKeysDialog {
                String nextKey = keyData[k];
                if(MCTUtils.IsHexAnd6Byte(nextKey)) {
                     presetTestKeys.add(0, nextKey);
-                    //dialogKeyDisplaySpinnerAdapter.insert(nextKey, 0);
                     ((BaseAdapter) dialogKeyDisplaySpinnerAdapter).notifyDataSetChanged();
                }
           }
@@ -109,13 +110,29 @@ public class LoadKeysDialog {
 
                @Override
                public void onShow(DialogInterface dialog) {
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setCompoundDrawablesWithIntrinsicBounds(
+                         mainActivityRef.getResources().getDrawable(R.drawable.random_button_icon),
+                         null,
+                         null,
+                         null
+                    );
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
                          @Override
                          public void onClick(View view) {
+                              //MifareClassicToolLibrary.LoadStandardKeySets(true);
+                              //String[] standardKeysFull = MifareClassicToolLibrary.GetStandardAllKeys();
+                              //LoadKeysDialog.AppendPresetKeys(standardKeysFull);
                               String randomKey = MCTUtils.BytesToHexString(MCTUtils.GetRandomBytes(6));
                               LoadKeysDialog.AppendPresetKeys(new String[]{ randomKey });
                          }
                     });
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(12);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setCompoundDrawablesWithIntrinsicBounds(
+                         mainActivityRef.getResources().getDrawable(R.drawable.load_keys_from_file_icon),
+                         null,
+                         null,
+                         null
+                    );
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(new View.OnClickListener() {
                          @Override
                          public void onClick(View view) {
@@ -124,6 +141,14 @@ public class LoadKeysDialog {
                               LoadKeysDialog.AppendPresetKeys(keyDataArray);
                          }
                     });
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextSize(12);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setCompoundDrawablesWithIntrinsicBounds(
+                         mainActivityRef.getResources().getDrawable(R.drawable.done_button_icon),
+                         null,
+                         null,
+                         null
+                    );
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(12);
                }
           });
           return displayAddKeysDialog != null;

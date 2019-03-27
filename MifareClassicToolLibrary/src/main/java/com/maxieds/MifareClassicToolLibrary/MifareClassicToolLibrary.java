@@ -7,6 +7,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcManager;
 import android.nfc.Tag;
 import android.nfc.tech.NfcA;
+import android.nfc.tech.MifareClassic;
 import android.app.Activity;
 import android.content.Context;
 import android.provider.Settings;
@@ -129,7 +130,7 @@ public class MifareClassicToolLibrary {
         Intent startDispatchIntent = new Intent(targetActivity, targetActivity.getClass());
         startDispatchIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent startPendingIntent = PendingIntent.getActivity(targetActivity, 0, startDispatchIntent, 0);
-        String[][] enableFlags = new String[][] { new String[] {NfcA.class.getName()} };
+        String[][] enableFlags = new String[][] { new String[] { NfcA.class.getName(), MifareClassic.class.getName()} };
         nfcAdapter.enableForegroundDispatch(targetActivity, startPendingIntent, null, enableFlags);
         return true;
     }
@@ -243,6 +244,10 @@ public class MifareClassicToolLibrary {
             return null;
         }
         return standardKeys[kidx];
+    }
+
+    public static String[] GetStandardAllKeys() {
+        return standardKeys;
     }
 
 }

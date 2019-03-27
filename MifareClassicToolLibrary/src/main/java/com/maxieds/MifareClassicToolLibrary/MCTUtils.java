@@ -91,7 +91,7 @@ public class MCTUtils {
             }
             keyDataStream.close();
         } catch(IOException ioe) {
-            Log.e(TAG, ioe.getStackTrace().toString());
+            ioe.printStackTrace();
             return null;
         }
         return Arrays.copyOf(keysList.toArray(), keysList.size(), String[].class);
