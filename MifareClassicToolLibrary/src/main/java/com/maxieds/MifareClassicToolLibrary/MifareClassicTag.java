@@ -128,7 +128,7 @@ public class MifareClassicTag {
               for(int blk = 0; blk < sectorBlockCount; blk++) {
                    sectorBlockData[blk] = new byte[sectorBytesPerBlock];
                    try {
-                        byte[] blockDataBytes = mfcTag.readBlock(blk);
+                        byte[] blockDataBytes = mfcTag.readBlock(sectorFirstBlock + blk);
                         if(blockDataBytes != null) {
                              System.arraycopy(blockDataBytes, 0, sectorBlockData[blk], 0, blockDataBytes.length);
                              totalBytesRead += blockDataBytes.length;
@@ -578,7 +578,7 @@ public class MifareClassicTag {
      public String GetTagSizeSpecString() {
           String specString = String.format(Locale.US, "%s | %d Sectors x %d Blocks @ %sB",
                                             GetTagByteCountString(GetTagSize()), tagSectorCount,
-                                            tagSectorCount / tagBlockCount, tagBytesPerBlock);
+                                            tagBlockCount / tagSectorCount, tagBytesPerBlock);
           return specString;
      }
 
