@@ -37,7 +37,7 @@
         <GridLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.85"
+            android:layout_weight="1"
             android:layout_marginBottom="0dp"
             android:background="@color/deviceStatusBarBackgroundColor"
             android:columnCount="3"
@@ -136,13 +136,33 @@
 
         </GridLayout>
 
-        <Button
-            android:layout_width="0dp"
+        <ImageView
+            android:id="@+id/haveActiveTagIcon"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="0.15"
-            android:drawableLeft="@drawable/about_gear_icon"
+            android:paddingLeft="2dp"
+            android:src="@drawable/have_active_tag_icon"
+            android:layout_gravity="center_horizontal|center_vertical|left"
+            />
+
+        <ImageView
+            android:id="@+id/activeTagScanningIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="2dp"
+            android:src="@drawable/active_scanning_icon"
+            android:layout_gravity="center_horizontal|center_vertical|left"
+            />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/about_gear_icon"
             android:background="@color/deviceStatusBarBackgroundColor"
             android:onClick="ActionButtonDisplayAppAboutInfo"
+            android:paddingLeft="2dp"
+            android:paddingRight="6dp"
+            android:layout_gravity="center_horizontal|center_vertical|right"
             />
 
     </LinearLayout>

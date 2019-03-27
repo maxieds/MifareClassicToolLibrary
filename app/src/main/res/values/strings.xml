@@ -12,10 +12,12 @@
     <string name="aboutAppTitle">About this application ...</string>
     <string name="aboutAppDesc">This application is an Android demo of the Mifare Classic Tool Library
                                 developed by Parklink. The application is written and developed
-                                by Maxie D. Schmidt (maxieds@gmail.com) -- https://github.com/maxieds. </string>
+                                by Maxie D. Schmidt (maxieds@gmail.com) -- https://github.com/maxieds.
+    </string>
 
     <string name="newTagInstructions">"Found new tag with UID=%s.\nHold the tag in place so we can read its contents ...
     </string>
+    <string name="ignoringTagFmt">"Not actively scanning:\nIgnoring tag with UID=%s."</string>
 
     <string-array name="DumpImageRawFiles">
         <item>mfc1k_random_content_fixed_keys</item>

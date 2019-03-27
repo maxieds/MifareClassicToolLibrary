@@ -22,6 +22,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Toolbar;
 import android.widget.Spinner;
 import android.support.v7.app.AlertDialog;
+import android.widget.ImageView;
+import android.os.AsyncTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,9 +77,13 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                             MifareClassicToolLibrary.GetLibraryVersion()));
           setActionBar(toolbar);
 
+          currentlyTagScanning = false;
+          SetActiveTagScanningIcon(false);
+          SetHaveActiveTagIcon(false);
+
           // set this last so we display immediately after returning:
           delayInitialTagDisplayHandler.postDelayed(delayInitialTagDisplayRunnable, LAUNCH_DEFAULT_TAG_DELAY);
-          onNewIntent(getIntent());
+          Log.i(TAG, getString(com.maxieds.ParklinkMCTLibraryDemo.R.string.app_name) + " up and running AT " + MCTUtils.GetTimestamp());
 
      }
 
@@ -99,6 +105,29 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           DisplayToastMessage(toastMsg, Toast.LENGTH_SHORT);
      }
 
+     private final int ALPHA_ENABLED = 255;
+     private final int ALPHA_DISABLED = 64;
+
+     protected void SetActiveTagScanningIcon(boolean enabled) {
+          ImageView tagScanningIcon = (ImageView) findViewById(R.id.activeTagScanningIcon);
+          if(enabled) {
+               tagScanningIcon.setAlpha(ALPHA_ENABLED);
+          }
+          else {
+               tagScanningIcon.setAlpha(ALPHA_DISABLED);
+          }
+     }
+
+     protected void SetHaveActiveTagIcon(boolean enabled) {
+          ImageView tagScanningIcon = (ImageView) findViewById(R.id.haveActiveTagIcon);
+          if(enabled) {
+               tagScanningIcon.setAlpha(ALPHA_ENABLED);
+          }
+          else {
+               tagScanningIcon.setAlpha(ALPHA_DISABLED);
+          }
+     }
+
      @Override
      public void onResume() {
           super.onResume();
@@ -108,7 +137,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      public void onPause() {
           if(currentlyTagScanning) {
                MifareClassicToolLibrary.StopLiveTagScanning(this);
-               currentlyTagScanning = false;
+               //currentlyTagScanning = false;
+               Log.i(TAG, getString(R.string.app_name) + " : onPause AT " + MCTUtils.GetTimestamp());
           }
           super.onPause();
      }
@@ -120,27 +150,62 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           if(intent == null || intent.getAction() == null) {
                return;
           }
-          if(intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED) ||
-             intent.getAction().equals(NfcAdapter.ACTION_TECH_DISCOVERED)) {
-               Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+          if(currentlyTagScanning && (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED) ||
+             intent.getAction().equals(NfcAdapter.ACTION_TECH_DISCOVERED))) {
+               final Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
                if(MifareClassicTag.CheckMifareClassicSupport(nfcTag, this) != 0) {
                     DisplayToastMessage("The discovered NFC device is not a Mifare Classic tag.");
                }
                else {
                     Vibrator vibObj = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                     vibObj.vibrate(100);
+                    vibObj.vibrate(35);
+                    vibObj.vibrate(100);
                     String instStr = String.format(Locale.US, getString(R.string.newTagInstructions),
                                                    MCTUtils.BytesToHexString(nfcTag.getId()));
                     DisplayToastMessage(instStr, Toast.LENGTH_LONG);
-                    try {
-                         MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys());
-                         activeMFCTag = mfcTag;
-                         DisplayNewMFCTag(activeMFCTag);
-                         newMFCTagFound = true;
-                    } catch(MifareClassicLibraryException mfcLibExcpt) {
-                         mfcLibExcpt.printStackTrace();
-                         DisplayToastMessage(mfcLibExcpt.ToString());
-                    }
+                    SetHaveActiveTagIcon(true);
+                    currentlyTagScanning = false;
+                    AsyncTask.execute(new Runnable() {
+                         @Override
+                         public void run() {
+                              try {
+                                   MainActivity.mainActivityInstance.newMFCTagFound = true;
+                                   MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys());
+                                   MainActivity.mainActivityInstance.activeMFCTag = mfcTag;
+                                   MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                             MainActivity.mainActivityInstance.DisplayNewMFCTag(MainActivity.mainActivityInstance.activeMFCTag);
+                                        }
+                                   });
+                              } catch(MifareClassicLibraryException mfcLibExcpt) {
+                                   mfcLibExcpt.printStackTrace();
+                                   final String toastErrorMsg = mfcLibExcpt.ToString();
+                                   MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                             DisplayToastMessage(toastErrorMsg);
+                                        }
+                                   });
+                              }
+                              MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
+                                   @Override
+                                   public void run() {
+                                        SetHaveActiveTagIcon(false);
+                                   }
+                              });
+                         }
+                    });
+               }
+          }
+          else if(intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED) ||
+                  intent.getAction().equals(NfcAdapter.ACTION_TECH_DISCOVERED)) {
+               Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+               if(nfcTag != null) {
+                    String toastStatusMsg = String.format(Locale.US, getString(R.string.ignoringTagFmt),
+                                                          MCTUtils.BytesToHexString(nfcTag.getId()));
+                    DisplayToastMessage(toastStatusMsg);
                }
           }
      }
@@ -232,7 +297,9 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           dialog.setIcon(R.drawable.about_gear_icon);
           dialog.setTitle(R.string.aboutAppTitle);
           dialog.setMessage(getString(R.string.aboutAppDesc) +
-                            "\n\nBuild Date: " + com.maxieds.ParklinkMCTLibraryDemo.BuildConfig.BUILD_TIMESTAMP);
+                            "\n\nBuild Date/Time: " + BuildConfig.BUILD_TIMESTAMP +
+                            "\nGit Commit of Build: " + BuildConfig.GIT_COMMIT_HASH +
+                            "\nGit Revision Date:\n" + BuildConfig.GIT_COMMIT_DATE);
           dialog.setPositiveButton("Ok", null);
           dialog.show();
      }
@@ -249,10 +316,9 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      private static Handler tagScanHandler = new Handler();
      private static Runnable tagScanRunnable = new Runnable() {
           public void run() {
-               if(MainActivity.mainActivityInstance.currentlyTagScanning) {
-                    MifareClassicToolLibrary.StopLiveTagScanning(MainActivity.mainActivityInstance);
-                    MainActivity.mainActivityInstance.currentlyTagScanning = false;
-               }
+               //MifareClassicToolLibrary.StopLiveTagScanning(MainActivity.mainActivityInstance);
+               MainActivity.mainActivityInstance.currentlyTagScanning = false;
+               MainActivity.mainActivityInstance.SetActiveTagScanningIcon(false);
                if(!MainActivity.mainActivityInstance.newMFCTagFound) {
                     com.maxieds.ParklinkMCTLibraryDemo.MainActivity.mainActivityInstance.DisplayToastMessage("No Mifare Classic tags found!");
                }
@@ -264,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           currentlyTagScanning = true;
           MifareClassicToolLibrary.StartLiveTagScanning(this);
           tagScanHandler.postDelayed(tagScanRunnable, TAG_SCANNING_TIME);
+          SetActiveTagScanningIcon(true);
           DisplayToastMessage("Scanning for new tag ...", Toast.LENGTH_LONG);
      }
 

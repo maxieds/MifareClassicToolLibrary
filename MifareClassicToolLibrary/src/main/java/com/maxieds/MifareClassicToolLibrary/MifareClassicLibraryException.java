@@ -68,7 +68,7 @@ public class MifareClassicLibraryException extends Exception {
         }
 
         public String ToString() {
-            return GetExceptionName() + "(" + GetExceptionDescription() + ")";
+            return GetExceptionName() + "::" + GetExceptionDescription();
         }
 
     }

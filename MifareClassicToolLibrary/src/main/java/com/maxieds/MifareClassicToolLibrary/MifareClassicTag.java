@@ -47,25 +47,23 @@ public class MifareClassicTag {
              sectorBlockData = null;
          }
 
-         public MFCSector FromTag(Tag nfcTag, int saddr) {
-             MFCSector mfcSector = new MFCSector();
+         public void FromTag(Tag nfcTag, int saddr) throws MifareClassicLibraryException {
              MifareClassic mfcTag = MifareClassic.get(nfcTag);
              if(mfcTag == null) {
-                 return null;
+                 throw new MifareClassicLibraryException(UnsupportedTagException);
              }
-             mfcSector.sectorAddress = saddr;
-             mfcSector.sectorFirstBlock = mfcTag.sectorToBlock(mfcSector.sectorAddress);
-             mfcSector.sectorBlockCount = mfcTag.getBlockCountInSector(mfcSector.sectorAddress);
-             mfcSector.sectorBytesPerBlock = MifareClassic.BLOCK_SIZE;
-             mfcSector.sectorSize = mfcSector.sectorBlockCount * mfcSector.sectorBytesPerBlock;
-             return mfcSector;
+             sectorAddress = saddr;
+             sectorFirstBlock = mfcTag.sectorToBlock(sectorAddress);
+             sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddress);
+             sectorBytesPerBlock = MifareClassic.BLOCK_SIZE;
+             sectorSize = sectorBlockCount * sectorBytesPerBlock;
          }
 
          public int ReadSector(Tag nfcTag, String[] trialKeysList) throws MifareClassicLibraryException {
               if(nfcTag == null) {
                    throw new MifareClassicLibraryException(NFCErrorException);
               }
-              else if(trialKeysList == null || trialKeysList.length == 0) {
+              else if(trialKeysList == null) {
                    throw new MifareClassicLibraryException(InvalidKeysException);
               }
               MifareClassic mfcTag = MifareClassic.get(nfcTag);
@@ -75,12 +73,12 @@ public class MifareClassicTag {
               try {
                    mfcTag.connect();
                    if(!mfcTag.isConnected()) {
-                        return 0;
+                        throw new MifareClassicLibraryException(NFCErrorException);
                    }
                    //mfcTag.setTimeout(1000);
               } catch(IOException ioe) {
                    ioe.printStackTrace();
-                   return 0;
+                   throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
               }
               // try to "crack" the keys with a preset list of values before we proceed:
               boolean authedKeyA = false, authedKeyB = false;
@@ -102,7 +100,12 @@ public class MifareClassicTag {
                         }
                    } catch(IOException ioe) {
                         ioe.printStackTrace();
-                        throw new MifareClassicLibraryException(NFCErrorException);
+                        try {
+                             mfcTag.close();
+                        } catch(IOException ioeClose) {
+                             ioeClose.printStackTrace();
+                        }
+                        throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
                    }
               }
               try {
@@ -114,7 +117,12 @@ public class MifareClassicTag {
                    }
               } catch(IOException ioe) {
                    ioe.printStackTrace();
-                   throw new MifareClassicLibraryException(NFCErrorException);
+                   try {
+                        mfcTag.close();
+                   } catch(IOException ioeClose) {
+                        ioeClose.printStackTrace();
+                   }
+                   throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
               }
               int totalBytesRead = 0;
               sectorBlockData = new byte[sectorBlockCount][];
@@ -125,13 +133,18 @@ public class MifareClassicTag {
                         if(blockDataBytes != null) {
                              System.arraycopy(blockDataBytes, 0, sectorBlockData[blk], 0, blockDataBytes.length);
                              totalBytesRead += blockDataBytes.length;
-                             if(blk == sectorBlockCount - 1) { // in the trailer key and access bit block:
+                             if(blk == sectorBlockCount - 1 && blockDataBytes.length >= 10) { // in the trailer key and access bit block:
                                   sectorAccessBits = new byte[4];
                                   System.arraycopy(blockDataBytes, 6, sectorAccessBits, 0, 4);
                              }
                         }
                    } catch(Exception ioe) {
-                        throw new MifareClassicLibraryException(PartialReadException);
+                        try {
+                             mfcTag.close();
+                        } catch(IOException ioeClose) {
+                             ioeClose.printStackTrace();
+                        }
+                        throw new MifareClassicLibraryException(PartialReadException, ioe.getMessage());
                    }
               }
               try {
@@ -143,7 +156,6 @@ public class MifareClassicTag {
          }
 
          public String GetAccessBytesDescription() {
-             // TODO
              return null;
          }
 
@@ -225,7 +237,7 @@ public class MifareClassicTag {
          if(nfcTag == null) {
              throw new MifareClassicLibraryException(NoTagException);
          }
-         else if(keyData == null || keyData.length == 0) {
+         else if(keyData == null) {
              throw new MifareClassicLibraryException(NoKeysFoundException);
          }
          else if(!CheckMFCKeys(keyData)) {
@@ -239,9 +251,11 @@ public class MifareClassicTag {
              throw new MifareClassicLibraryException(UnsupportedTagException);
          }
          MifareClassicTag mfcTagData = new MifareClassicTag();
-         mfcTagData.ReadTagReservedData(nfcTag);
-         mfcTagData.IdentifyTag(nfcTag, mfcSupportCode);
-         mfcTagData.DumpTag(nfcTag, keyData);
+         if(!mfcTagData.ReadTagReservedData(nfcTag) ||
+               !mfcTagData.IdentifyTag(nfcTag, mfcSupportCode) ||
+               !mfcTagData.DumpTag(nfcTag, keyData)) {
+              return null;
+         }
          return mfcTagData;
      }
 
@@ -314,28 +328,36 @@ public class MifareClassicTag {
           if(nfcTag == null) {
                throw new MifareClassicLibraryException(NFCErrorException);
           }
-          else if(keyData == null || keyData.length == 0) {
+          else if(keyData == null) {
                throw new MifareClassicLibraryException(InvalidKeysException);
           }
           mfcDumpImageData = new byte[tagSize];
-          int mfcDumpDataArrayPos = 0;
-          for(int sct = 0; sct < tagBlockCount; ) {
+          int mfcDumpDataArrayPos = 0, bytesRead = 0, sct = 0;
+          while(sct < tagSectorCount) {
+               Log.d(TAG, String.format(Locale.US, "Reading SECTOR #%02d:", sct));
                MFCSector nextSector = new MFCSector();
                nextSector.FromTag(nfcTag, sct);
-               int bytesRead = nextSector.ReadSector(nfcTag, keyData);
+               bytesRead = nextSector.ReadSector(nfcTag, keyData);
                if(bytesRead < nextSector.sectorSize) {
                     failedSectors.add(nextSector);
                }
                tagSectors.add(nextSector);
-               sct += nextSector.sectorSize;
+               //sct += nextSector.sectorBlockCount;
+               sct++;
+               Log.d(TAG, "Next Sector Block Count: " + nextSector.sectorBlockCount);
                if(nextSector.sectorBlockData == null) {
                     mfcDumpDataArrayPos += nextSector.sectorSize;
                     continue;
                }
                for(int blk = 0; blk < nextSector.sectorBlockCount; blk++) {
+                    Log.d(TAG, String.format(Locale.US, "    >> Reading (SUB)BLOCK #%02d.%d: %s", sct, blk,
+                                             MCTUtils.BytesToHexString(nextSector.sectorBlockData[blk])));
                     if(nextSector.sectorBlockData[blk] != null) {
                          System.arraycopy(nextSector.sectorBlockData[blk], 0, mfcDumpImageData,
                                           mfcDumpDataArrayPos, nextSector.sectorBytesPerBlock);
+                    }
+                    else {
+                         return false;
                     }
                     mfcDumpDataArrayPos += nextSector.sectorBytesPerBlock;
                }

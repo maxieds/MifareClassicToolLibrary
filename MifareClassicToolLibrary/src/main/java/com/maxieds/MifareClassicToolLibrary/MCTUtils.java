@@ -100,7 +100,7 @@ public class MCTUtils {
     public static String GetTimestamp() {
         Time currentTime = new Time();
         currentTime.setToNow();
-        return currentTime.format("%Y-%m-%d-%T");
+        return currentTime.format("%Y-%m-%d @ %T %p");
     }
 
 }
