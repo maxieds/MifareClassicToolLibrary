@@ -77,6 +77,7 @@ public class MifareClassicTag {
                    if(!mfcTag.isConnected()) {
                         return 0;
                    }
+                   //mfcTag.setTimeout(1000);
               } catch(IOException ioe) {
                    ioe.printStackTrace();
                    return 0;

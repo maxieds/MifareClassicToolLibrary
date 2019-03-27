@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import com.android.build.OutputFile
+
+def getDateTimestamp() {
+    DateFormat df = new SimpleDateFormat("YYYY-MM-dd @ HH:mm:ss a");
+    return new String(df.format(new Date()).toString());
+}
+
 android {
 
     compileSdkVersion 28
@@ -9,9 +18,10 @@ android {
         applicationId "com.maxieds.ParklinkMCTLibraryDemo"
         minSdkVersion 26
         targetSdkVersion 26
-        versionCode 3
-        versionName "1.0.2"
+        versionCode 4
+        versionName "1.0.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "BUILD_TIMESTAMP", "\"" + getDateTimestamp() + "\""
     }
 
     buildTypes {
