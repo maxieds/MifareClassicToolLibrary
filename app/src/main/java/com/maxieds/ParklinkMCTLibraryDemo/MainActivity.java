@@ -24,11 +24,11 @@ import android.widget.Spinner;
 import android.support.v7.app.AlertDialog;
 import android.widget.ImageView;
 import android.os.AsyncTask;
+import android.app.Activity;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
-import java.lang.reflect.Field;
 
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicTag;
@@ -94,6 +94,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      public Context GetApplicationContext() {
           return this;
      }
+
+     public Activity GetApplicationActivity() { return this; }
 
      protected void DisplayToastMessage(String toastMsg, int toastLength) {
           Toast toastDisplay = Toast.makeText(this, toastMsg, toastLength);

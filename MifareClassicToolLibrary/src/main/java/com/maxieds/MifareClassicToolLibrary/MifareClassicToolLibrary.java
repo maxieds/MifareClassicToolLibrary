@@ -11,6 +11,14 @@ import android.nfc.tech.MifareClassic;
 import android.app.Activity;
 import android.content.Context;
 import android.provider.Settings;
+import android.view.Gravity;
+import android.widget.Toast;
+import android.view.View;
+import android.view.LayoutInflater;
+import android.widget.ImageView;
+import android.graphics.drawable.Drawable;
+import android.content.res.ColorStateList;
+import android.widget.TextView;
 
 import java.io.File;
 import java.io.InputStream;
@@ -20,6 +28,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Stack;
 import java.util.Locale;
+
+import com.maxieds.MifareClassicToolLibrary.R;
 
 public class MifareClassicToolLibrary {
 
@@ -248,6 +258,41 @@ public class MifareClassicToolLibrary {
 
     public static String[] GetStandardAllKeys() {
         return standardKeys;
+    }
+
+    private static int[] PROGRESS_BAR_POSITIONS = new int[] {
+         R.drawable.statusbar_0,
+         R.drawable.statusbar_1,
+         R.drawable.statusbar_2,
+         R.drawable.statusbar_3,
+         R.drawable.statusbar_4,
+         R.drawable.statusbar_5,
+         R.drawable.statusbar_6,
+         R.drawable.statusbar_7,
+         R.drawable.statusbar_8,
+    };
+
+    public static void DisplayProgressBar(String thingsName, int curPos, int totalPos) {
+        final int statusBarMarkerIdx = Math.min((int) ((curPos - 1) * PROGRESS_BAR_POSITIONS.length / totalPos),
+                                                PROGRESS_BAR_POSITIONS.length - 1);
+        final String statusBarMsg = String.format(Locale.US, "%s % 3d / % 3d (%.3g %%)",
+                                                  thingsName, curPos, totalPos, (float) curPos / totalPos * 100.0);
+        final Activity mainAppActivity = localMFCDataIface.GetApplicationActivity();
+        mainAppActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                 Toast toastDisplay = Toast.makeText(localMFCDataIface.GetApplicationActivity(), statusBarMsg,
+                                                     2 * Toast.LENGTH_SHORT);
+                 toastDisplay.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL, 0, 0);
+                 LayoutInflater layoutInflater = mainAppActivity.getLayoutInflater();
+                 View toastProgressView = layoutInflater.inflate(R.layout.status_bar_layout, null);
+                 Drawable statusBarMarkerImage = mainAppActivity.getResources().getDrawable(PROGRESS_BAR_POSITIONS[statusBarMarkerIdx]);
+                 ((ImageView) toastProgressView.findViewById(R.id.progressBarImageMarker)).setImageDrawable(statusBarMarkerImage);
+                 ((TextView) toastProgressView.findViewById(R.id.progressBarText)).setText(statusBarMsg);
+                 toastDisplay.setView(toastProgressView);
+                 toastDisplay.show();
+            }
+        });
     }
 
 }
