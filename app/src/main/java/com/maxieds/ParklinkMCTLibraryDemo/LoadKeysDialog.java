@@ -24,8 +24,6 @@ public class LoadKeysDialog {
      private static List<String> presetTestKeys;
      private static Activity mainActivityRef;
      private AlertDialog displayAddKeysDialog;
-     //private static Spinner dialogKeyDisplaySpinner;
-     //private static ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter;
      private static boolean staticVariablesInit = false;
 
      public static void initStaticVariablesBeforeClass() {
@@ -95,10 +93,6 @@ public class LoadKeysDialog {
           dialog.setIcon(R.drawable.add_key_dialog_icon);
           dialog.setTitle(R.string.loadKeysDialogTitle);
 
-          //if(dialogKeyDisplaySpinner.getParent() != null) {
-          //     ((ViewGroup) dialogKeyDisplaySpinner.getParent()).removeView(dialogKeyDisplaySpinner);
-          //}
-          //List<String> testKeysCopy = presetTestKeys;
           Spinner dialogKeyDisplaySpinner = new Spinner((Context) mainActivityRef);
           dialogKeyDisplaySpinner.setPadding(20, 15, 20, 5);
           ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(

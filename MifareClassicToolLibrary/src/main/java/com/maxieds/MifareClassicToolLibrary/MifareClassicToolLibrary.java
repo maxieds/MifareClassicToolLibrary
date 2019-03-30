@@ -36,6 +36,9 @@ public class MifareClassicToolLibrary {
 
     private static final String TAG = MifareClassicToolLibrary.class.getSimpleName();
 
+    public static int RETRIES_TO_AUTH_KEYAB = 1;
+    public static boolean RETRY_AUTH_IFNOT_BOTH = false;
+
     private static MifareClassicDataInterface localMFCDataIface = null;
 
     public static String GetLibraryVersion() {
@@ -187,11 +190,11 @@ public class MifareClassicToolLibrary {
         return mfcTagData;
     }
 
-    public static boolean ProcessNewTagFound(Tag nfcTag) throws MifareClassicLibraryException {
+    public static boolean ProcessNewTagFound(Tag nfcTag, boolean displayGUIProgressBar) throws MifareClassicLibraryException {
         if(nfcTag == null || !Initialized()) {
             return false;
         }
-        MifareClassicTag mfcTagData = MifareClassicTag.Decode(nfcTag);
+        MifareClassicTag mfcTagData = MifareClassicTag.Decode(nfcTag, displayGUIProgressBar);
         if(mfcTagData != null) {
              return AddToLibraryTagStack(mfcTagData);
         }

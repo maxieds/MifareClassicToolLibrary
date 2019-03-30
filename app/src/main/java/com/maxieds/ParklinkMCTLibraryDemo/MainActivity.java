@@ -27,6 +27,10 @@ import android.os.AsyncTask;
 import android.app.Activity;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.app.DownloadManager;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.CheckBox;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,6 +84,21 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                             BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
                                             MifareClassicToolLibrary.GetLibraryVersion()));
           setActionBar(toolbar);
+
+          SeekBar numAuthRetriesSeekbar = (SeekBar) findViewById(R.id.libraryNumRetriesSeekbar);
+          numAuthRetriesSeekbar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
+               @Override
+               public void onStopTrackingTouch(SeekBar seekBar) {}
+               @Override
+               public void onStartTrackingTouch(SeekBar seekBar) {}
+               @Override
+               public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB = progress;
+                    String statusMsg = String.format(Locale.US, "Changed RETRIES_TO_AUTH_KEYAB setting to %d auth retries.",
+                                                     progress);
+                    MainActivity.mainActivityInstance.DisplayToastMessage(statusMsg);
+               }
+          });
 
           int hasReadExternalPermission = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
           if (hasReadExternalPermission != PackageManager.PERMISSION_GRANTED) {
@@ -188,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          public void run() {
                               try {
                                    MainActivity.mainActivityInstance.newMFCTagFound = true;
-                                   MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys());
+                                   MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), true);
                                    MainActivity.mainActivityInstance.activeMFCTag = mfcTag;
                                    MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
                                         @Override
@@ -329,11 +348,39 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           MainActivity.mainActivityInstance.DisplayNewMFCTag(activeMFCTag);
      }
 
+     public void ActionButtonDisplayHelpForMCTLibrarySettingsTextView(View helpBtnView) {
+          String helpMsg = "A sector read may fail if the attempted authentications with KeyA and/or KeyB" +
+                           " are unsuccessful. This may happen even if the attempted auth keys are correct to" +
+                           " unlock the sector data. The setting specifies the number of retries on failed" +
+                           " sector auth attempts (Default: 1).";
+          DisplayToastMessage(helpMsg, android.widget.Toast.LENGTH_LONG);
+     }
+
+     public void ActionButtonUpdateMCTLibrarySettingsCheckbox(View btnView) {
+          CheckBox cb = (CheckBox) findViewById(R.id.cbRetryIfNotBothLibraryOption);
+          if(cb.isChecked()) {
+               MifareClassicToolLibrary.RETRY_AUTH_IFNOT_BOTH = true;
+          }
+          else {
+               MifareClassicToolLibrary.RETRY_AUTH_IFNOT_BOTH = false;
+          }
+          DisplayToastMessage(String.format(Locale.US, "Changed RETRY_AUTH_IFNOT_BOTH setting to %s.",
+                              cb.isChecked() ? "True" : "False"));
+     }
+
+     public void ActionButtonDisplayHelpForMCTLibrarySettingsCheckbox(View helpBtnView) {
+          String helpMsg = "Sets whether to retry authentication with keyA/B selections if only one or the other" +
+                           " (but not both) of KeyA/KeyB has been correctly authenticated. If both KeyA/KeyB have" +
+                           " been correctly authed, this setting is irrelevent. If neither have been authed, then" +
+                           " the authentication procedure is repeated according to the number of retries setting" +
+                           " from above.";
+          DisplayToastMessage(helpMsg, android.widget.Toast.LENGTH_LONG);
+     }
+
      private static final int TAG_SCANNING_TIME = 5000;
      private static Handler tagScanHandler = new Handler();
      private static Runnable tagScanRunnable = new Runnable() {
           public void run() {
-               //MifareClassicToolLibrary.StopLiveTagScanning(MainActivity.mainActivityInstance);
                MainActivity.mainActivityInstance.currentlyTagScanning = false;
                MainActivity.mainActivityInstance.SetActiveTagScanningIcon(false);
                if(!MainActivity.mainActivityInstance.newMFCTagFound) {
@@ -351,6 +398,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           DisplayToastMessage("Scanning for new tag ...", Toast.LENGTH_LONG);
      }
 
+     private final String OUTPUT_FILE_APP_DIRECTORY = "MCTLibraryDemoFiles";
+
      public void ActionButtonWriteTagToFile(View btnView) {
           if (activeMFCTag == null) {
                DisplayToastMessage("No active MFC tag to save!");
@@ -358,10 +407,10 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
           String outfileBasePath = String.format(Locale.ENGLISH, "MifareClassic%s-tagdump-%s",
                MifareClassicTag.GetTagByteCountString(activeMFCTag.GetTagSize()),
-               MCTUtils.GetTimestamp().replace(":", ""));
-          for (int ext = 0; ext < 2; ext++) {
+               MCTUtils.GetTimestamp().replace(" ", "").replace("@", "-"));
+          for(int ext = 0; ext < 2; ext++) {
                String fileExt = ext != 0 ? ".dmp" : ".hex";
-               File downloadsFolder = new File("//sdcard//Download//");
+               File downloadsFolder = new File("//sdcard//Download//" + OUTPUT_FILE_APP_DIRECTORY + "//");
                File outfile = new File(downloadsFolder, outfileBasePath + fileExt);
                boolean docsFolderExists = true;
                if (!downloadsFolder.exists()) {
@@ -371,11 +420,24 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                     outfile = new File(downloadsFolder.getAbsolutePath(), outfileBasePath + fileExt);
                }
                try {
+                    DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                    String mimeType, downloadDesc;
+                    boolean isMediaScannable;
                     if (ext == 0) {
                          activeMFCTag.ExportToHexFile(outfile.getAbsolutePath());
+                         mimeType = "text/plain";
+                         isMediaScannable = true;
+                         downloadDesc = "MFC1K Data Dump Image (Hex Bytes)" + outfile.getName();
                     } else {
                          activeMFCTag.ExportToBinaryDumpFile(outfile.getAbsolutePath());
+                         mimeType = "application/octet-stream";
+                         isMediaScannable = false;
+                         downloadDesc = "MFC1K Data Dump Image (Binary Format)" + outfile.getName();
                     }
+                    downloadManager.addCompletedDownload(OUTPUT_FILE_APP_DIRECTORY + "/" + outfile.getName(),
+                                                         downloadDesc,
+                                                         isMediaScannable, mimeType, outfile.getAbsolutePath(),
+                                                         outfile.length(),true);
                } catch (IOException ioe) {
                     ioe.printStackTrace();
                     return;

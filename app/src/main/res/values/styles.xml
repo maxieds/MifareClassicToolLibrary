@@ -42,17 +42,30 @@
         <item name="android:textSize">6sp</item>
     </style>
 
-    <style name="GridButtons">
+    <style name="GridButtons" parent="Widget.AppCompat.Button.Borderless">
         <item name="android:background">@color/colorAccent</item>
-        <item name="android:maxButtonHeight">8dp</item>
+        <item name="android:maxButtonHeight">6dp</item>
         <item name="android:layout_columnWeight">0.25</item>
         <item name="android:layout_width">100dp</item>
-        <item name="android:maxHeight">40dp</item>
+        <item name="android:maxHeight">25dp</item>
         <item name="android:layout_weight">0.29</item>
         <item name="android:textSize">11sp</item>
         <item name="android:textStyle">normal|bold</item>
         <item name="android:fontFamily">sans-serif-smallcaps</item>
         <item name="android:drawablePadding">3dp</item>
+    </style>
+
+    <style name="CheckBoxTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorControlNormal">@color/deviceStatusBarHeaderTextColor</item>
+        <item name="colorControlActivated">@color/deviceStatusBarHeaderTextColor</item>
+        <item name="buttonTint">@color/deviceStatusBarHeaderTextColor</item>
+    </style>
+
+    <style name="SeekBarTheme" parent="Widget.AppCompat.SeekBar.Discrete">
+        <item name="colorControlNormal">@color/deviceStatusBarInfoTextColor</item>
+        <item name="colorControlActivated">@color/deviceStatusBarBackgroundColor</item>
+        <item name="android:progressTint">@color/colorAccentHighlight</item>
+        <item name="android:thumbTint">@color/colorPrimaryDark</item>
     </style>
 
 </resources>

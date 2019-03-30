@@ -81,31 +81,41 @@ public class MifareClassicTag {
               }
               // try to "crack" the keys with a preset list of values before we proceed:
               boolean authedKeyA = false, authedKeyB = false;
-              for(int kidx = 0; kidx < trialKeysList.length; kidx++) {
-                   try {
-                        byte[] activeKey = MCTUtils.HexStringToBytes(trialKeysList[kidx]);
-                        if (!authedKeyA && mfcTag.authenticateSectorWithKeyA(sectorAddress, activeKey)) {
-                             authedKeyA = true;
-                             keyA = new byte[MFCKEY_BYTE_SIZE];
-                             System.arraycopy(activeKey, 0, keyA, 0, MFCKEY_BYTE_SIZE);
-                        }
-                        if (!authedKeyB && mfcTag.authenticateSectorWithKeyB(sectorAddress, activeKey)) {
-                             authedKeyB = true;
-                             keyB = new byte[MFCKEY_BYTE_SIZE];
-                             System.arraycopy(activeKey, 0, keyB, 0, MFCKEY_BYTE_SIZE);
-                        }
-                        if (authedKeyA && authedKeyB) {
-                             break;
-                        }
-                   } catch(IOException ioe) {
-                        ioe.printStackTrace();
+              int curAuthAttempt = 0;
+              while(curAuthAttempt <= MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB) {
+                   for (int kidx = 0; kidx < trialKeysList.length; kidx++) {
                         try {
-                             mfcTag.close();
-                        } catch(IOException ioeClose) {
-                             ioeClose.printStackTrace();
+                             byte[] activeKey = MCTUtils.HexStringToBytes(trialKeysList[kidx]);
+                             if (!authedKeyA && mfcTag.authenticateSectorWithKeyA(sectorAddress, activeKey)) {
+                                  authedKeyA = true;
+                                  keyA = new byte[MFCKEY_BYTE_SIZE];
+                                  System.arraycopy(activeKey, 0, keyA, 0, MFCKEY_BYTE_SIZE);
+                             }
+                             if (!authedKeyB && mfcTag.authenticateSectorWithKeyB(sectorAddress, activeKey)) {
+                                  authedKeyB = true;
+                                  keyB = new byte[MFCKEY_BYTE_SIZE];
+                                  System.arraycopy(activeKey, 0, keyB, 0, MFCKEY_BYTE_SIZE);
+                             }
+                             if (authedKeyA && authedKeyB) {
+                                  break;
+                             }
+                        } catch (IOException ioe) {
+                             ioe.printStackTrace();
+                             try {
+                                  mfcTag.close();
+                             } catch (IOException ioeClose) {
+                                  ioeClose.printStackTrace();
+                             }
+                             throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
                         }
-                        throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
                    }
+                   if(authedKeyA && authedKeyB) {
+                        break;
+                   }
+                   else if(!MifareClassicToolLibrary.RETRY_AUTH_IFNOT_BOTH && (authedKeyA || authedKeyB)) {
+                        break;
+                   }
+                   curAuthAttempt++;
               }
               try {
                    if (authedKeyA) {
@@ -334,7 +344,7 @@ public class MifareClassicTag {
          }
      }
 
-     public static MifareClassicTag Decode(Tag nfcTag, String[] keyData) throws MifareClassicLibraryException {
+     public static MifareClassicTag Decode(Tag nfcTag, String[] keyData, boolean displayGUIProgressBar) throws MifareClassicLibraryException {
          if(nfcTag == null) {
              throw new MifareClassicLibraryException(NoTagException);
          }
@@ -355,19 +365,20 @@ public class MifareClassicTag {
          MifareClassicTag mfcTagData = new MifareClassicTag();
          if(!mfcTagData.ReadTagReservedData(nfcTag) ||
                !mfcTagData.IdentifyTag(nfcTag, mfcSupportCode) ||
-               !mfcTagData.DumpTag(nfcTag, keyData)) {
+               !mfcTagData.DumpTag(nfcTag, keyData, displayGUIProgressBar)) {
               return null;
          }
          return mfcTagData;
      }
 
-     public static MifareClassicTag Decode(Tag nfcTag) throws MifareClassicLibraryException {
+     public static MifareClassicTag Decode(Tag nfcTag, boolean displayGUIProgressBar) throws MifareClassicLibraryException {
          String[] defaultKeyData = new String[] {
+                 "000000000000",
                  MCTUtils.BytesToHexString(MifareClassic.KEY_DEFAULT),
                  MCTUtils.BytesToHexString(MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY),
                  MCTUtils.BytesToHexString(MifareClassic.KEY_NFC_FORUM)
          };
-         return MifareClassicTag.Decode(nfcTag, defaultKeyData);
+         return MifareClassicTag.Decode(nfcTag, defaultKeyData, displayGUIProgressBar);
      }
 
      public boolean ReadTagReservedData(Tag nfcTag) throws MifareClassicLibraryException {
@@ -426,7 +437,7 @@ public class MifareClassicTag {
          return successCode;
      }
 
-     public boolean DumpTag(Tag nfcTag, String[] keyData) throws MifareClassicLibraryException {
+     public boolean DumpTag(Tag nfcTag, String[] keyData, boolean displayGUIProgressBar) throws MifareClassicLibraryException {
           if(nfcTag == null) {
                throw new MifareClassicLibraryException(NFCErrorException);
           }
@@ -436,8 +447,9 @@ public class MifareClassicTag {
           mfcDumpImageData = new byte[tagSize];
           int mfcDumpDataArrayPos = 0, bytesRead = 0, sct = 0;
           while(sct < tagSectorCount) {
-               Log.d(TAG, String.format(Locale.US, "Reading SECTOR #%02d:", sct));
-               MifareClassicToolLibrary.DisplayProgressBar("SECTOR", sct + 1, tagSectorCount);
+               if(displayGUIProgressBar) {
+                    MifareClassicToolLibrary.DisplayProgressBar("SECTOR", sct + 1, tagSectorCount);
+               }
                MFCSector nextSector = new MFCSector();
                nextSector.FromTag(nfcTag, sct);
                bytesRead = nextSector.ReadSector(nfcTag, keyData);
@@ -445,16 +457,12 @@ public class MifareClassicTag {
                     failedSectors.add(nextSector);
                }
                tagSectors.add(nextSector);
-               //sct += nextSector.sectorBlockCount;
                sct++;
-               Log.d(TAG, "Next Sector Block Count: " + nextSector.sectorBlockCount);
                if(nextSector.sectorBlockData == null) {
                     mfcDumpDataArrayPos += nextSector.sectorSize;
                     continue;
                }
                for(int blk = 0; blk < nextSector.sectorBlockCount; blk++) {
-                    Log.d(TAG, String.format(Locale.US, "    >> Reading (SUB)BLOCK #%02d.%d: %s", sct, blk,
-                                             MCTUtils.BytesToHexString(nextSector.sectorBlockData[blk])));
                     if(nextSector.sectorBlockData[blk] != null) {
                          System.arraycopy(nextSector.sectorBlockData[blk], 0, mfcDumpImageData,
                                           mfcDumpDataArrayPos, nextSector.sectorBytesPerBlock);
