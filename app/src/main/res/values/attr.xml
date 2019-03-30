@@ -12,4 +12,9 @@
     <attr name="deviceStatusBarHeaderTextColor" format="reference|color" />
     <attr name="actionBarBackgroundColor" format="reference|color" />
 
+    <attr name="UIDDataBlockHighlight" format="reference|color" />
+    <attr name="KeyAHighlight" format="reference|color" />
+    <attr name="AccessBytesHighlight" format="reference|color" />
+    <attr name="KeyBHighlight" format="reference|color" />
+
 </resources>

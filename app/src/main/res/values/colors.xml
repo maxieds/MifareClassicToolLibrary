@@ -12,6 +12,12 @@
     <color name="actionBarBackgroundColor">#001a1a</color>
     <color name="actionBarTitleTextColor">#ffffff</color>
     <color name="actionBarSubtitleTextColor">#ffffff</color>
+
     <color name="transparent">#00ff0000</color>
+
+    <color name="UIDDataBlockHighlight">#AD7FA8</color>
+    <color name="KeyAHighlight">#EF2929</color>
+    <color name="AccessBytesHighlight">#FCAF3E</color>
+    <color name="KeyBHighlight">#8AE234</color>
 
 </resources>

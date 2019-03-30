@@ -356,18 +356,6 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           DisplayToastMessage(helpMsg, android.widget.Toast.LENGTH_LONG);
      }
 
-     public void ActionButtonUpdateMCTLibrarySettingsCheckbox(View btnView) {
-          CheckBox cb = (CheckBox) findViewById(R.id.cbRetryIfNotBothLibraryOption);
-          if(cb.isChecked()) {
-               MifareClassicToolLibrary.RETRY_AUTH_IFNOT_BOTH = true;
-          }
-          else {
-               MifareClassicToolLibrary.RETRY_AUTH_IFNOT_BOTH = false;
-          }
-          DisplayToastMessage(String.format(Locale.US, "Changed RETRY_AUTH_IFNOT_BOTH setting to %s.",
-                              cb.isChecked() ? "True" : "False"));
-     }
-
      public void ActionButtonDisplayHelpForMCTLibrarySettingsCheckbox(View helpBtnView) {
           String helpMsg = "Sets whether to retry authentication with keyA/B selections if only one or the other" +
                            " (but not both) of KeyA/KeyB has been correctly authenticated. If both KeyA/KeyB have" +

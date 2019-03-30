@@ -3,6 +3,8 @@ package com.maxieds.ParklinkMCTLibraryDemo;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.view.LayoutInflater;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
 
 import java.util.Locale;
 
@@ -25,7 +27,7 @@ public class SectorUIDisplay {
           return mainLayoutContainer;
      }
 
-     public static SectorUIDisplay NewInstance(byte[][] sectorBlockData, int sectorIndex, boolean sectorReadFailed) {
+     public static SectorUIDisplay NewInstance(String[] sectorBlockData, int sectorIndex, boolean sectorReadFailed) {
           SectorUIDisplay sectorDisplay = new SectorUIDisplay();
           LinearLayout sectorMainLayoutContainer = sectorDisplay.GetDisplayLayout();
           TextView tvSectorDisplayHeader = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayHeaderText);
@@ -35,20 +37,29 @@ public class SectorUIDisplay {
           }
           TextView tvSectorDisplayBytes = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayBytesText);
           for(int blk = 0; blk < sectorBlockData.length; blk++) {
-               String blockHexBytesText = MCTUtils.BytesToHexString(sectorBlockData[blk]);
-               String blockHexBytesTextSep = new String();
-               for(int spos = 0; spos < blockHexBytesText.length(); spos += 2) {
-                    blockHexBytesTextSep += blockHexBytesText.substring(spos, spos + 2);
-                    if(spos < blockHexBytesText.length() - 2) {
-                         blockHexBytesTextSep += ":";
-                    }
-               }
                if(blk > 0) {
                     tvSectorDisplayBytes.append("\n");
                }
-               tvSectorDisplayBytes.append(blockHexBytesTextSep);
+               if(sectorIndex == 0 && blk == 0) {
+                    tvSectorDisplayBytes.append(GetColorString(sectorBlockData[blk], R.color.UIDDataBlockHighlight));
+               }
+               else if(blk + 1 < sectorBlockData.length) {
+                    tvSectorDisplayBytes.append(sectorBlockData[blk]);
+               }
+               else {
+                    tvSectorDisplayBytes.append(GetColorString(sectorBlockData[blk].substring(0, 12), R.color.KeyAHighlight));
+                    tvSectorDisplayBytes.append(GetColorString(sectorBlockData[blk].substring(12, 20), R.color.AccessBytesHighlight));
+                    tvSectorDisplayBytes.append(GetColorString(sectorBlockData[blk].substring(20, 32), R.color.KeyBHighlight));
+               }
           }
           return sectorDisplay;
+     }
+
+     public static SpannableString GetColorString(String data, int colorResId) {
+          SpannableString ss = new SpannableString(data);
+          int colorValue = MainActivity.mainActivityInstance.getResources().getColor(colorResId);
+          ss.setSpan(new ForegroundColorSpan(colorValue), 0, data.length(), 0);
+          return ss;
      }
 
 }

@@ -37,7 +37,6 @@ public class MifareClassicToolLibrary {
     private static final String TAG = MifareClassicToolLibrary.class.getSimpleName();
 
     public static int RETRIES_TO_AUTH_KEYAB = 1;
-    public static boolean RETRY_AUTH_IFNOT_BOTH = false;
 
     private static MifareClassicDataInterface localMFCDataIface = null;
 

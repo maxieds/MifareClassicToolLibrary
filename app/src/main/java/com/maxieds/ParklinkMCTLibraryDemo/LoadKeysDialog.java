@@ -28,6 +28,15 @@ public class LoadKeysDialog {
 
      public static void initStaticVariablesBeforeClass() {
           presetTestKeys = new ArrayList<String>();
+          String[] defaultKeyData = new String[] {
+               "000000000000",
+               MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_DEFAULT),
+               MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY),
+               MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_NFC_FORUM)
+          };
+          for(int k = 0; k < defaultKeyData.length; k++) {
+               presetTestKeys.add(defaultKeyData[k]);
+          }
           mainActivityRef = MainActivity.mainActivityInstance;
           staticVariablesInit = true;
      }
@@ -35,15 +44,6 @@ public class LoadKeysDialog {
      public static String[] GetPresetKeys() {
           if(!staticVariablesInit) {
                initStaticVariablesBeforeClass();
-          }
-          if(presetTestKeys.size() == 0) {
-               String[] defaultKeyData = new String[] {
-                    "000000000000",
-                    MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_DEFAULT),
-                    MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY),
-                    MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_NFC_FORUM)
-               };
-               return defaultKeyData;
           }
           String[] keysStringArray = new String[presetTestKeys.size()];
           for(int s = 0; s < presetTestKeys.size(); s++) {

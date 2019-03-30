@@ -11,6 +11,7 @@ import android.content.Context;
 import android.os.Parcel;
 import android.os.IBinder;
 import android.os.Bundle;
+import android.nfc.TagLostException;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -28,6 +29,8 @@ public class MifareClassicTag {
      private static final String TAG = MifareClassicTag.class.getSimpleName();
 
      public static final int MFCKEY_BYTE_SIZE = 6;
+     public static final String NO_KEY = "------------";
+     public static final String NO_DATA = "--------------------------------";
 
      public static class MFCSector {
 
@@ -36,13 +39,11 @@ public class MifareClassicTag {
          public int sectorBlockCount;
          public int sectorFirstBlock;
          public int sectorBytesPerBlock;
-         public byte[] sectorAccessBits;
-         public byte[] keyA, keyB;
-         public byte[][] sectorBlockData;
+         public String[] sectorBlockData;
+         private MifareClassic m_mfcTag;
 
          public MFCSector() {
              sectorAddress = sectorSize = sectorBlockCount = sectorFirstBlock = sectorBytesPerBlock = 0;
-             sectorAccessBits = keyA = keyB = null;
              sectorBlockData = null;
          }
 
@@ -58,7 +59,7 @@ public class MifareClassicTag {
              sectorSize = sectorBlockCount * sectorBytesPerBlock;
          }
 
-         public int ReadSector(Tag nfcTag, String[] trialKeysList) throws MifareClassicLibraryException {
+         public boolean ReadSector(Tag nfcTag, String[] trialKeysList) throws MifareClassicLibraryException {
               if(nfcTag == null) {
                    throw new MifareClassicLibraryException(NFCErrorException);
               }
@@ -79,94 +80,206 @@ public class MifareClassicTag {
                    ioe.printStackTrace();
                    throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
               }
-              // try to "crack" the keys with a preset list of values before we proceed:
-              boolean authedKeyA = false, authedKeyB = false;
-              int curAuthAttempt = 0;
-              while(curAuthAttempt <= MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB) {
-                   for (int kidx = 0; kidx < trialKeysList.length; kidx++) {
-                        try {
-                             byte[] activeKey = MCTUtils.HexStringToBytes(trialKeysList[kidx]);
-                             if (!authedKeyA && mfcTag.authenticateSectorWithKeyA(sectorAddress, activeKey)) {
-                                  authedKeyA = true;
-                                  keyA = new byte[MFCKEY_BYTE_SIZE];
-                                  System.arraycopy(activeKey, 0, keyA, 0, MFCKEY_BYTE_SIZE);
-                             }
-                             if (!authedKeyB && mfcTag.authenticateSectorWithKeyB(sectorAddress, activeKey)) {
-                                  authedKeyB = true;
-                                  keyB = new byte[MFCKEY_BYTE_SIZE];
-                                  System.arraycopy(activeKey, 0, keyB, 0, MFCKEY_BYTE_SIZE);
-                             }
-                             if (authedKeyA && authedKeyB) {
-                                  break;
-                             }
-                        } catch (IOException ioe) {
-                             ioe.printStackTrace();
-                             try {
-                                  mfcTag.close();
-                             } catch (IOException ioeClose) {
-                                  ioeClose.printStackTrace();
-                             }
-                             throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
-                        }
-                   }
-                   if(authedKeyA && authedKeyB) {
-                        break;
-                   }
-                   else if(!MifareClassicToolLibrary.RETRY_AUTH_IFNOT_BOTH && (authedKeyA || authedKeyB)) {
-                        break;
-                   }
-                   curAuthAttempt++;
-              }
-              try {
-                   if (authedKeyA) {
-                        mfcTag.authenticateSectorWithKeyA(sectorAddress, keyA);
-                   }
-                   else if (authedKeyB) {
-                        mfcTag.authenticateSectorWithKeyB(sectorAddress, keyB);
-                   }
-              } catch(IOException ioe) {
-                   ioe.printStackTrace();
+              m_mfcTag = mfcTag;
+              // For all entries in keys list do:
+              for (int i = 0; i < trialKeysList.length; i++) {
+                   String[][] results = new String[2][];
                    try {
-                        mfcTag.close();
-                   } catch(IOException ioeClose) {
-                        ioeClose.printStackTrace();
+                        results[0] = ReadSectorHelper(sectorAddress, MCTUtils.HexStringToBytes(trialKeysList[i]), false);
+                        results[1] = ReadSectorHelper(sectorAddress, MCTUtils.HexStringToBytes(trialKeysList[i]), true);
+                   } catch (TagLostException e) {
+                        throw new MifareClassicLibraryException(PartialReadException, e.getMessage());
                    }
-                   throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
-              }
-              int totalBytesRead = 0;
-              sectorBlockData = new byte[sectorBlockCount][];
-              for(int blk = 0; blk < sectorBlockCount; blk++) {
-                   sectorBlockData[blk] = new byte[sectorBytesPerBlock];
-                   try {
-                        byte[] blockDataBytes = mfcTag.readBlock(sectorFirstBlock + blk);
-                        if(blockDataBytes != null) {
-                             System.arraycopy(blockDataBytes, 0, sectorBlockData[blk], 0, blockDataBytes.length);
-                             totalBytesRead += blockDataBytes.length;
-                             if(blk == sectorBlockCount - 1 && blockDataBytes.length >= 10) { // in the trailer key and access bit block:
-                                  sectorAccessBits = new byte[4];
-                                  System.arraycopy(blockDataBytes, 6, sectorAccessBits, 0, 4);
-                             }
-                        }
-                   } catch(Exception ioe) {
-                        try {
-                             mfcTag.close();
-                        } catch(IOException ioeClose) {
-                             ioeClose.printStackTrace();
-                        }
-                        throw new MifareClassicLibraryException(PartialReadException, ioe.getMessage());
+                   // Merge results.
+                   if (results[0] != null || results[1] != null) {
+                        sectorBlockData = MergeSectorData(results[0], results[1]);
                    }
               }
               try {
-                   mfcTag.close();
+                   m_mfcTag.close();
               } catch(IOException ioe) {
                    ioe.printStackTrace();
               }
-              return totalBytesRead;
+              return true;
          }
 
-         public String GetAccessBytesDescription() {
-             return null;
-         }
+          public String[] ReadSectorHelper(int sectorIndex, byte[] key,
+                                           boolean useAsKeyB) throws TagLostException {
+               boolean auth = Authenticate(sectorIndex, key, useAsKeyB);
+               String[] ret = null;
+               // Read sector.
+               if (auth) {
+                    // Read all blocks.
+                    ArrayList<String> blocks = new ArrayList<>();
+                    int firstBlock = m_mfcTag.sectorToBlock(sectorIndex);
+                    int lastBlock = firstBlock + 4;
+                    if (m_mfcTag.getSize() == MifareClassic.SIZE_4K && sectorIndex > 31) {
+                         lastBlock = firstBlock + 16;
+                    }
+                    for (int i = firstBlock; i < lastBlock; i++) {
+                         try {
+                              byte blockBytes[] = m_mfcTag.readBlock(i);
+                              // mMFC.readBlock(i) must return 16 bytes or throw an error.
+                              // At least this is what the documentation says.
+                              // On Samsung's Galaxy S5 and Sony's Xperia Z2 however, it
+                              // sometimes returns < 16 bytes for unknown reasons.
+                              // Update: Aaand sometimes it returns more than 16 bytes...
+                              // The appended byte(s) are 0x00.
+                              if (blockBytes.length < 16) {
+                                   throw new IOException();
+                              }
+                              if (blockBytes.length > 16) {
+                                   blockBytes = Arrays.copyOf(blockBytes,16);
+                              }
+
+                              blocks.add(MCTUtils.BytesToHexString(blockBytes));
+                         } catch (TagLostException e) {
+                              throw e;
+                         } catch (IOException e) {
+                              // Could not read block.
+                              // (Maybe due to key/authentication method.)
+                              Log.d(TAG, "(Recoverable) Error while reading block " + i + " from tag.");
+                              blocks.add(NO_DATA);
+                              if (!m_mfcTag.isConnected()) {
+                                   throw new TagLostException("Tag removed during ReadSectorHelper.");
+                              }
+                              // After an error, a re-authentication is needed.
+                              Authenticate(sectorIndex, key, useAsKeyB);
+                         }
+                    }
+                    ret = blocks.toArray(new String[blocks.size()]);
+                    int last = ret.length -1;
+                    // Validate if it was possible to read any data.
+                    boolean noData = true;
+                    for (int i = 0; i < ret.length; i++) {
+                         if (!ret[i].equals(NO_DATA)) {
+                              noData = false;
+                              break;
+                         }
+                    }
+                    if (noData) {
+                         // Was is possible to read any data (especially with key B)?
+                         // If Key B may be read in the corresponding Sector Trailer,
+                         // it cannot serve for authentication (according to NXP).
+                         // What they mean is that you can authenticate successfully,
+                         // but can not read data. In this case the
+                         // readBlock() result is 0 for each block.
+                         // Also, a tag might be bricked in a way that the authentication
+                         // works, but reading data does not.
+                         ret = null;
+                    } else {
+                         // Merge key in last block (sector trailer).
+                         if (!useAsKeyB) {
+                              if (IsKeyBReadable(MCTUtils.HexStringToBytes(ret[last].substring(12, 20)))) {
+                                   ret[last] = MCTUtils.BytesToHexString(key) + ret[last].substring(12, 32);
+                              } else {
+                                   ret[last] = MCTUtils.BytesToHexString(key) + ret[last].substring(12, 20) + NO_KEY;
+                              }
+                         }
+                         else {
+                              ret[last] = NO_KEY + ret[last].substring(12, 20) + MCTUtils.BytesToHexString(key);
+                         }
+                    }
+               }
+               return ret;
+          }
+
+          private boolean Authenticate(int sectorIndex, byte[] key, boolean useAsKeyB) {
+               // Fetch the retry authentication option. Some tags and
+               // devices have strange issues and need a retry in order to work...
+               // Info: https://github.com/ikarus23/MifareClassicTool/issues/134
+               // and https://github.com/ikarus23/MifareClassicTool/issues/106
+               boolean retryAuth = MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB > 0;
+               int retryCount = MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB;
+               boolean ret = false;
+               for (int i = 0; i < retryCount+1; i++) {
+                    try {
+                         if (!useAsKeyB) {
+                              // Key A.
+                              ret = m_mfcTag.authenticateSectorWithKeyA(sectorIndex, key);
+                         } else {
+                              // Key B.
+                              ret = m_mfcTag.authenticateSectorWithKeyB(sectorIndex, key);
+                         }
+                    } catch (IOException e) {
+                         Log.d(TAG, "Error authenticating with tag.");
+                         return false;
+                    }
+                    if (ret || !retryAuth) { // Retry?
+                         break;
+                    }
+               }
+               return ret;
+          }
+
+          private boolean IsKeyBReadable(byte[] ac) {
+               byte c1 = (byte) ((ac[1] & 0x80) >>> 7);
+               byte c2 = (byte) ((ac[2] & 0x08) >>> 3);
+               byte c3 = (byte) ((ac[2] & 0x80) >>> 7);
+               return c1 == 0
+                    && (c2 == 0 && c3 == 0)
+                    || (c2 == 1 && c3 == 0)
+                    || (c2 == 0 && c3 == 1);
+          }
+
+          private String[] MergeSectorData(String[] firstResult, String[] secondResult) {
+               String[] ret = null;
+               if (firstResult != null || secondResult != null) {
+                    if ((firstResult != null && secondResult != null)
+                         && firstResult.length != secondResult.length) {
+                         return null;
+                    }
+                    int length  = (firstResult != null) ? firstResult.length : secondResult.length;
+                    ArrayList<String> blocks = new ArrayList<>();
+                    // Merge data blocks.
+                    for (int i = 0; i < length -1 ; i++) {
+                         if (firstResult != null && firstResult[i] != null
+                              && !firstResult[i].equals(NO_DATA)) {
+                              blocks.add(firstResult[i]);
+                         }
+                         else if (secondResult != null && secondResult[i] != null
+                              && !secondResult[i].equals(NO_DATA)) {
+                              blocks.add(secondResult[i]);
+                         }
+                         else {
+                              // None of the results got the data form the block.
+                              blocks.add(NO_DATA);
+                         }
+                    }
+                    ret = blocks.toArray(new String[blocks.size() + 1]);
+                    int last = length - 1;
+                    // Merge sector trailer.
+                    if (firstResult != null && firstResult[last] != null
+                         && !firstResult[last].equals(NO_DATA)) {
+                         // Take first for sector trailer.
+                         ret[last] = firstResult[last];
+                         if (secondResult != null && secondResult[last] != null
+                              && !secondResult[last].equals(NO_DATA)) {
+                              // Merge key form second result to sector trailer.
+                              ret[last] = ret[last].substring(0, 20) + secondResult[last].substring(20);
+                         }
+                    }
+                    else if (secondResult != null && secondResult[last] != null
+                         && !secondResult[last].equals(NO_DATA)) {
+                         // No first result. Take second result as sector trailer.
+                         ret[last] = secondResult[last];
+                    }
+                    else {
+                         // No sector trailer at all.
+                         ret[last] = NO_DATA;
+                    }
+               }
+               return ret;
+          }
+
+          public boolean ContainsInvalidBlockData() {
+              for(int blk = 0; blk < sectorBlockData.length; blk++) {
+                   if(sectorBlockData[blk].contains("--")) {
+                        return true;
+                   }
+              }
+              return false;
+          }
 
      }
 
@@ -274,7 +387,7 @@ public class MifareClassicTag {
 
      private String mfcTagType;
      private int tagSize, tagSectorCount, tagBlockCount, tagBytesPerBlock;
-     private byte[] mfcDumpImageData;
+     private String[] mfcDumpImageData;
      private List<MFCSector> failedSectors, tagSectors;
      private String rfTechCaps, tagManufacturer;
      private String tagUID, tagATQA, tagSAK, tagATS;
@@ -444,33 +557,21 @@ public class MifareClassicTag {
           else if(keyData == null) {
                throw new MifareClassicLibraryException(InvalidKeysException);
           }
-          mfcDumpImageData = new byte[tagSize];
-          int mfcDumpDataArrayPos = 0, bytesRead = 0, sct = 0;
+          mfcDumpImageData = new String[tagBlockCount];
+          int blockIndex = 0, sct = 0;
           while(sct < tagSectorCount) {
                if(displayGUIProgressBar) {
                     MifareClassicToolLibrary.DisplayProgressBar("SECTOR", sct + 1, tagSectorCount);
                }
                MFCSector nextSector = new MFCSector();
                nextSector.FromTag(nfcTag, sct);
-               bytesRead = nextSector.ReadSector(nfcTag, keyData);
-               if(bytesRead < nextSector.sectorSize) {
+               if(!nextSector.ReadSector(nfcTag, keyData) || nextSector.ContainsInvalidBlockData()) {
                     failedSectors.add(nextSector);
                }
                tagSectors.add(nextSector);
                sct++;
-               if(nextSector.sectorBlockData == null) {
-                    mfcDumpDataArrayPos += nextSector.sectorSize;
-                    continue;
-               }
-               for(int blk = 0; blk < nextSector.sectorBlockCount; blk++) {
-                    if(nextSector.sectorBlockData[blk] != null) {
-                         System.arraycopy(nextSector.sectorBlockData[blk], 0, mfcDumpImageData,
-                                          mfcDumpDataArrayPos, nextSector.sectorBytesPerBlock);
-                    }
-                    else {
-                         return false;
-                    }
-                    mfcDumpDataArrayPos += nextSector.sectorBytesPerBlock;
+               for(int blk = 0; blk < nextSector.sectorBlockCount; blk++, blockIndex++) {
+                    mfcDumpImageData[blockIndex] = nextSector.sectorBlockData[blk];
                }
           }
           return true;
@@ -511,7 +612,7 @@ public class MifareClassicTag {
          return true;
      }
 
-     public byte[] GetMFCDumpImageData() {
+     public String[] GetMFCDumpImageData() {
          return mfcDumpImageData;
      }
 
@@ -596,9 +697,8 @@ public class MifareClassicTag {
           }
           PrintWriter printWriter = new PrintWriter(outputFile, "UTF-8");
           for(int blk = 0; blk < tagBlockCount; blk += tagBytesPerBlock) {
-               byte[] blockBytes = new byte[tagBytesPerBlock];
-               System.arraycopy(mfcDumpImageData, blk, blockBytes, 0, tagBytesPerBlock);
-               printWriter.print(MCTUtils.BytesToHexString(blockBytes));
+               String blkDataStr = mfcDumpImageData[blk].replace("-", "0");
+               printWriter.print(blkDataStr);
           }
           printWriter.close();
           return true;
@@ -609,7 +709,10 @@ public class MifareClassicTag {
                return false;
           }
           FileOutputStream outStream = new FileOutputStream(outputFile);
-          outStream.write(mfcDumpImageData);
+          for(int blk = 0; blk < mfcDumpImageData.length; blk++) {
+               String blkDataStr = mfcDumpImageData[blk].replace("-", "0");
+               outStream.write(MCTUtils.HexStringToBytes(blkDataStr));
+          }
           outStream.close();
           return true;
      }
@@ -657,16 +760,17 @@ public class MifareClassicTag {
           Context appMainContext = MifareClassicToolLibrary.GetApplicationContext();
           try {
                InputStream rawFileStream = appMainContext.getResources().openRawResource(resID);
-               mfcTagData.mfcDumpImageData = new byte[MFCLASSIC1K_TAG_SIZE];
-               int bytesReadCount = 0;
+               mfcTagData.mfcDumpImageData = new String[mfcTagData.tagBlockCount];
+               int bytesReadCount = 0, blkIndex = 0;
                byte[] byteReadBuffer = new byte[MFCLASSIC_BLOCK_SIZE];
                while (bytesReadCount < MFCLASSIC1K_TAG_SIZE) {
                     int readByteCount = rawFileStream.read(byteReadBuffer, 0, MFCLASSIC_BLOCK_SIZE);
                     if (readByteCount < 0) {
                          break;
                     }
-                    System.arraycopy(byteReadBuffer, 0, mfcTagData.mfcDumpImageData, bytesReadCount, readByteCount);
+                    mfcTagData.mfcDumpImageData[blkIndex] = MCTUtils.BytesToHexString(byteReadBuffer);
                     bytesReadCount += readByteCount;
+                    blkIndex++;
                }
                if(bytesReadCount < MFCLASSIC1K_TAG_SIZE) {
                     Log.e(TAG, "ERROR: Only able to load " + bytesReadCount + " of " + MFCLASSIC1K_TAG_SIZE + "bytes from tag!");
@@ -684,36 +788,24 @@ public class MifareClassicTag {
                nextSector.sectorBlockCount = mfcTagData.tagBlockCount;
                nextSector.sectorFirstBlock = sec * MFCLASSIC1K_BLOCKS_PER_SECTOR;
                nextSector.sectorBytesPerBlock = mfcTagData.tagBytesPerBlock;
-               nextSector.sectorBlockData = new byte[MFCLASSIC1K_BLOCKS_PER_SECTOR][];
+               nextSector.sectorBlockData = new String[MFCLASSIC1K_BLOCKS_PER_SECTOR];
                for(int blk = 0; blk < MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
-                    byte[] blockBytes = new byte[mfcTagData.tagBytesPerBlock];
-                    System.arraycopy(mfcTagData.mfcDumpImageData, sec * MFCLASSIC1K_BLOCKS_PER_SECTOR + blk,
-                                     blockBytes, 0, mfcTagData.tagBytesPerBlock);
-                    nextSector.sectorBlockData[blk] = blockBytes;
-                    if(blk == MFCLASSIC1K_BLOCKS_PER_SECTOR - 1) {
-                         nextSector.keyA = new byte[6];
-                         System.arraycopy(blockBytes, 0, nextSector.keyA, 0, 6);
-                         nextSector.sectorAccessBits = new byte[4];
-                         System.arraycopy(blockBytes, 6, nextSector.sectorAccessBits, 0, 4);
-                         nextSector.keyB = new byte[6];
-                         System.arraycopy(blockBytes, 10, nextSector.keyB, 0, 6);
-                    }
+                    nextSector.sectorBlockData[blk] = mfcTagData.mfcDumpImageData[sec * MFCLASSIC1K_BLOCKS_PER_SECTOR + blk];
                }
                mfcTagData.tagSectors.add(nextSector);
           }
           // load the rest of the first block (tag read-only) sector data for accounting:
+          byte[] manuBlockBytes = MCTUtils.HexStringToBytes(mfcTagData.mfcDumpImageData[0]);
           byte[] uidBytes = new byte[4];
-          System.arraycopy(mfcTagData.mfcDumpImageData, 0, uidBytes, 0, 4);
+          System.arraycopy(manuBlockBytes, 0, uidBytes, 0, 4);
           mfcTagData.tagUID = MCTUtils.BytesToHexString(uidBytes);
-          byte sakByte = mfcTagData.mfcDumpImageData[5];
+          byte sakByte = manuBlockBytes[5];
           mfcTagData.tagSAK = MCTUtils.BytesToHexString(new byte[] { sakByte });
           byte[] atqaBytes = new byte[2];
-          System.arraycopy(mfcTagData.mfcDumpImageData, 6, atqaBytes, 0, 2);
+          System.arraycopy(manuBlockBytes, 6, atqaBytes, 0, 2);
           mfcTagData.tagATQA = MCTUtils.BytesToHexString(atqaBytes);
           mfcTagData.tagATS = "Unknown ATS";
-          byte[] manuBytes = new byte[8];
-          System.arraycopy(mfcTagData.mfcDumpImageData, 8, manuBytes, 0, 8);
-          mfcTagData.tagManufacturer = MCTUtils.BytesToHexString(manuBytes);
+          mfcTagData.tagManufacturer = mfcTagData.mfcDumpImageData[1];
           return mfcTagData;
 
      }
