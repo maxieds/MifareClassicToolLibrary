@@ -19,5 +19,6 @@
     <color name="KeyAHighlight">#EF2929</color>
     <color name="AccessBytesHighlight">#FCAF3E</color>
     <color name="KeyBHighlight">#8AE234</color>
+    <color name="SectorBlockNoData">#729FCF</color>
 
 </resources>

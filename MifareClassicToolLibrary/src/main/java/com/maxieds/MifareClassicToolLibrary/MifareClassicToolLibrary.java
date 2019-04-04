@@ -290,7 +290,7 @@ public class MifareClassicToolLibrary {
             @Override
             public void run() {
                  Toast toastDisplay = Toast.makeText(localMFCDataIface.GetApplicationActivity(), statusBarMsg,
-                                                     2 * Toast.LENGTH_SHORT);
+                                                     8 * Toast.LENGTH_LONG);
                  toastDisplay.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL, 0, 0);
                  LayoutInflater layoutInflater = mainAppActivity.getLayoutInflater();
                  View toastProgressView = layoutInflater.inflate(R.layout.status_bar_layout, null);

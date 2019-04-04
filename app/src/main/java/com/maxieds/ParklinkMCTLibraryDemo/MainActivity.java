@@ -180,13 +180,15 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      }
 
      public static final int FILE_SELECT_CODE = 0;
+     private static boolean READY_WRITE_BLANK_TAG = false;
 
      @Override
      protected void onNewIntent(Intent intent) {
           if(intent == null || intent.getAction() == null) {
                return;
           }
-          if(currentlyTagScanning && (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED) ||
+          if((currentlyTagScanning || READY_WRITE_BLANK_TAG) &&
+               (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED) ||
              intent.getAction().equals(NfcAdapter.ACTION_TECH_DISCOVERED))) {
                final Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
                if(MifareClassicTag.CheckMifareClassicSupport(nfcTag, this) != 0) {
@@ -206,15 +208,25 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          @Override
                          public void run() {
                               try {
-                                   MainActivity.mainActivityInstance.newMFCTagFound = true;
-                                   MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), true);
-                                   MainActivity.mainActivityInstance.activeMFCTag = mfcTag;
-                                   MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                             MainActivity.mainActivityInstance.DisplayNewMFCTag(MainActivity.mainActivityInstance.activeMFCTag);
-                                        }
-                                   });
+                                   if(READY_WRITE_BLANK_TAG) {
+                                        READY_WRITE_BLANK_TAG = false;
+                                        Spinner rawFileSrcSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
+                                        String resFilePath = rawFileSrcSpinner.getSelectedItem().toString();
+                                        int rawDumpResID = MainActivity.mainActivityInstance.getResources().getIdentifier(
+                                                           resFilePath, "raw", MainActivity.mainActivityInstance.getPackageName());
+                                        MifareClassicTag.WriteBlankMFC1KTag(nfcTag, rawDumpResID, LoadKeysDialog.GetPresetKeys());
+                                   }
+                                   else {
+                                        MainActivity.mainActivityInstance.newMFCTagFound = true;
+                                        MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), true);
+                                        MainActivity.mainActivityInstance.activeMFCTag = mfcTag;
+                                        MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
+                                             @Override
+                                             public void run() {
+                                                  MainActivity.mainActivityInstance.DisplayNewMFCTag(MainActivity.mainActivityInstance.activeMFCTag);
+                                             }
+                                        });
+                                   }
                               } catch(MifareClassicLibraryException mfcLibExcpt) {
                                    mfcLibExcpt.printStackTrace();
                                    final String toastErrorMsg = mfcLibExcpt.ToString();
@@ -348,6 +360,12 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           MainActivity.mainActivityInstance.DisplayNewMFCTag(activeMFCTag);
      }
 
+     public void ActionButtonWriteDumpImageToTag(View btnView) {
+          READY_WRITE_BLANK_TAG = true;
+          DisplayToastMessage("Hold tag to back of phone to begin write process.");
+          tagScanHandler.postDelayed(tagScanRunnable, TAG_WRITE_TIMEOUT);
+     }
+
      public void ActionButtonDisplayHelpForMCTLibrarySettingsTextView(View helpBtnView) {
           String helpMsg = "A sector read may fail if the attempted authentications with KeyA and/or KeyB" +
                            " are unsuccessful. This may happen even if the attempted auth keys are correct to" +
@@ -366,14 +384,20 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      }
 
      private static final int TAG_SCANNING_TIME = 5000;
+     private static final int TAG_WRITE_TIMEOUT = 3500;
      private static Handler tagScanHandler = new Handler();
      private static Runnable tagScanRunnable = new Runnable() {
           public void run() {
-               MainActivity.mainActivityInstance.currentlyTagScanning = false;
-               MainActivity.mainActivityInstance.SetActiveTagScanningIcon(false);
-               if(!MainActivity.mainActivityInstance.newMFCTagFound) {
-                    com.maxieds.ParklinkMCTLibraryDemo.MainActivity.mainActivityInstance.DisplayToastMessage("No Mifare Classic tags found!");
+               if(MainActivity.mainActivityInstance.currentlyTagScanning &&
+                    !MainActivity.mainActivityInstance.newMFCTagFound) {
+                    MainActivity.mainActivityInstance.DisplayToastMessage("No Mifare Classic tags found!");
                }
+               else if(MainActivity.mainActivityInstance.READY_WRITE_BLANK_TAG) {
+                    MainActivity.mainActivityInstance.DisplayToastMessage("Write new tag operation timed out!");
+               }
+               MainActivity.mainActivityInstance.currentlyTagScanning = false;
+               MainActivity.mainActivityInstance.READY_WRITE_BLANK_TAG = false;
+               MainActivity.mainActivityInstance.SetActiveTagScanningIcon(false);
           }
      };
 

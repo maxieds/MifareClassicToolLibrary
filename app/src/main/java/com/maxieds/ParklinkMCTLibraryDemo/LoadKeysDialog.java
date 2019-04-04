@@ -64,7 +64,7 @@ public class LoadKeysDialog {
           presetTestKeys.clear();
           for(int k = 0; k < keyData.length; k++) {
                String nextKey = keyData[k];
-               if(MCTUtils.IsHexAnd6Byte(nextKey)) {
+               if(MCTUtils.IsHexAnd6Byte(nextKey) && !keyDataCopy.contains(nextKey)) {
                     keyDataCopy.add(0, nextKey.toUpperCase());
                }
           }

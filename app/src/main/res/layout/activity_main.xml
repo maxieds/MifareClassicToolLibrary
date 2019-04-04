@@ -300,7 +300,7 @@
             android:id="@+id/dumpImageRawFilesSrcSpinner"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.85"
+            android:layout_weight="0.80"
             android:entries="@array/DumpImageRawFiles"
             android:gravity="right|center_vertical"
             android:popupBackground="?colorAccentHighlight"
@@ -309,13 +309,21 @@
 
         <Button
             style="@style/GridButtons"
-            android:layout_weight="0.15"
+            android:layout_weight="0.10"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="ActionButtonLoadDumpImageFromFile"
             android:drawableLeft="@drawable/load_from_file_icon"
             android:text="Load Tag ..." />
 
+        <Button
+            style="@style/GridButtons"
+            android:layout_weight="0.10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="ActionButtonWriteDumpImageToTag"
+            android:drawableLeft="@drawable/write_tag_icon"
+            android:text="Write Tag ..." />
 
     </LinearLayout>
 

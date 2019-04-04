@@ -44,7 +44,8 @@ public class MifareClassicTag {
 
          public MFCSector() {
              sectorAddress = sectorSize = sectorBlockCount = sectorFirstBlock = sectorBytesPerBlock = 0;
-             sectorBlockData = null;
+             sectorBlockData = new String[0];
+             m_mfcTag = null;
          }
 
          public void FromTag(Tag nfcTag, int saddr) throws MifareClassicLibraryException {
@@ -273,9 +274,15 @@ public class MifareClassicTag {
           }
 
           public boolean ContainsInvalidBlockData() {
+              if(sectorBlockData == null) {
+                   return false;
+              }
               for(int blk = 0; blk < sectorBlockData.length; blk++) {
-                   if(sectorBlockData[blk].contains("--")) {
+                   if(sectorBlockData[blk] != null && sectorBlockData[blk].contains("--")) {
                         return true;
+                   }
+                   else if(sectorBlockData[blk] == null) {
+                        return false;
                    }
               }
               return false;
@@ -570,7 +577,7 @@ public class MifareClassicTag {
                }
                tagSectors.add(nextSector);
                sct++;
-               for(int blk = 0; blk < nextSector.sectorBlockCount; blk++, blockIndex++) {
+               for(int blk = 0; blk < nextSector.sectorBlockData.length; blk++, blockIndex++) {
                     mfcDumpImageData[blockIndex] = nextSector.sectorBlockData[blk];
                }
           }
@@ -808,6 +815,74 @@ public class MifareClassicTag {
           mfcTagData.tagManufacturer = mfcTagData.mfcDumpImageData[1];
           return mfcTagData;
 
+     }
+
+     private static final String BLANK_MFC1KTAG_KEYA = "FFFFFFFFFFFF";
+     private static final String BLANK_MFC1KTAG_KEYB = "000000000000";
+
+     public static boolean WriteBlankMFC1KTag(Tag nfcTag, int rawResID, String[] keyDataList) throws MifareClassicLibraryException {
+          // get a handle on the Mifare Classic tag:
+          boolean writeTagStatus = true;
+          MifareClassic mfcTag = MifareClassic.get(nfcTag);
+          if(mfcTag == null) {
+               throw new MifareClassicLibraryException(NFCErrorException);
+          }
+          try {
+               mfcTag.connect();
+               if(!mfcTag.isConnected()) {
+                    throw new MifareClassicLibraryException(NFCErrorException);
+               }
+               Log.e(TAG, "NFC tag timeout: " + mfcTag.getTimeout());
+               mfcTag.setTimeout(1500);
+          } catch(IOException ioe) {
+               ioe.printStackTrace();
+               throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
+          }
+          // open the /res/raw file resource for the dump file we are going to be writing:
+          Context appContext = MifareClassicToolLibrary.GetApplicationContext();
+          try {
+               InputStream rawFileStream = appContext.getResources().openRawResource(rawResID);
+               byte[] dumpFileReadBuf = new byte[MFCLASSIC_BLOCK_SIZE];
+               int bufReadCount, sectorAddr = 0, sectorBlockOffset = 0, activeKeyIndex = 0;
+               int sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddr);
+               int curSectorBlock = sectorBlockCount;
+               int totalTagSectors = mfcTag.getSectorCount();
+               while ((bufReadCount = rawFileStream.read(dumpFileReadBuf, 0, MFCLASSIC_BLOCK_SIZE)) != -1) {
+                    if (bufReadCount < MFCLASSIC_BLOCK_SIZE) {
+                         throw new MifareClassicLibraryException(GenericMFCException, "Unable to read entire block.");
+                    }
+                    if(curSectorBlock == sectorBlockCount) {
+                         curSectorBlock = 0;
+                         sectorAddr++;
+                         sectorBlockOffset = mfcTag.sectorToBlock(sectorAddr);
+                         sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddr);
+                         boolean ableToAuthKeyA = false;
+                         for(int k = 0; k < keyDataList.length; k++) {
+                              byte[] keyBytes = MCTUtils.HexStringToBytes(keyDataList[k]);
+                              if (mfcTag.authenticateSectorWithKeyA(sectorAddr, keyBytes)) {
+                                   activeKeyIndex = k;
+                                   ableToAuthKeyA = true;
+                                   break;
+                              }
+                         }
+                         if(!ableToAuthKeyA) {
+                              Log.e(TAG, "Could not auth with keyA on sector #" + sectorAddr);
+                              writeTagStatus = false;
+                              continue;
+                         }
+                         Log.i(TAG, "Successfully authed with tag on sector #" + sectorAddr + " with key " + keyDataList[activeKeyIndex]);
+                    }
+                    mfcTag.writeBlock(sectorBlockOffset + curSectorBlock, dumpFileReadBuf);
+                    curSectorBlock++;
+                    MifareClassicToolLibrary.DisplayProgressBar("SECTOR WRITE", sectorAddr + 1, totalTagSectors);
+               }
+               rawFileStream.close();
+               mfcTag.close();
+          } catch(IOException ioe) {
+               ioe.printStackTrace();
+               throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
+          }
+          return writeTagStatus;
      }
 
 }

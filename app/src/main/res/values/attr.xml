@@ -16,5 +16,6 @@
     <attr name="KeyAHighlight" format="reference|color" />
     <attr name="AccessBytesHighlight" format="reference|color" />
     <attr name="KeyBHighlight" format="reference|color" />
+    <attr name="SectorBlockNoData" format="reference|color" />
 
 </resources>

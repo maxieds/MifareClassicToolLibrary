@@ -17,7 +17,7 @@
 
     <string name="newTagInstructions">"Found new tag with UID=%s.\nHold the tag in place so we can read its contents ...
     </string>
-    <string name="ignoringTagFmt">"Not actively scanning:\nIgnoring tag with UID=%s."</string>
+    <string name="ignoringTagFmt">"Not actively scanning or waiting to write blank tag:\nIgnoring tag with UID=%s."</string>
 
     <string-array name="DumpImageRawFiles">
         <item>mfc1k_random_content_fixed_keys</item>
@@ -29,6 +29,7 @@
         <item>mfc1k_9862453e4061_corrupted</item>
         <item>mfc1k_9862453e4061_halfcorrupted</item>
         <item>mfc1k_9862453e4061_original</item>
+        <item>mfc1k_9862453e4061_original_correctly_corrupt</item>
         <item>mfc1k_d7456978e639_noralsy</item>
     </string-array>
 
