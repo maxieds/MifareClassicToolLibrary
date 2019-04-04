@@ -30,9 +30,12 @@ import android.content.pm.PackageManager;
 import android.app.DownloadManager;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.CheckBox;
+import android.os.Environment;
+import android.support.v4.app.ShareCompat;
+import android.support.v4.content.FileProvider;
 
 import java.io.File;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -80,9 +83,9 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
           Toolbar toolbar = findViewById(R.id.toolbarActionBar);
           toolbar.setLogo(R.drawable.main_action_bar_logo_icon);
-          toolbar.setSubtitle(String.format(Locale.US, "App: v%s (%s) / Lib: %s",
+          toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) -- %s",
                                             BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
-                                            MifareClassicToolLibrary.GetLibraryVersion()));
+                                            BuildConfig.BUILD_TYPE));
           setActionBar(toolbar);
 
           SeekBar numAuthRetriesSeekbar = (SeekBar) findViewById(R.id.libraryNumRetriesSeekbar);
@@ -112,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
 
           currentlyTagScanning = false;
+          READY_WRITE_BLANK_TAG = false;
           SetActiveTagScanningIcon(false);
           SetHaveActiveTagIcon(false);
 
@@ -208,6 +212,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          @Override
                          public void run() {
                               try {
+                                   MifareClassicToolLibrary.EnableProgressBarDisplay(true);
                                    if(READY_WRITE_BLANK_TAG) {
                                         READY_WRITE_BLANK_TAG = false;
                                         Spinner rawFileSrcSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
@@ -237,6 +242,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                         }
                                    });
                               }
+                              MifareClassicToolLibrary.EnableProgressBarDisplay(false);
                               MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
                                    @Override
                                    public void run() {
@@ -267,11 +273,12 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          Cursor cursor = getContentResolver().query(data.getData(), null, null, null, null, null);
                          if (cursor != null && cursor.moveToFirst()) {
                               filePath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                              filePath = "//sdcard//Download//" + filePath;
+                              filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + filePath;
                          }
+                         filePath = data.getDataString();
                          throw new RuntimeException(filePath);
                     }
-                    return;
+                    break;
           }
           super.onActivityResult(requestCode, resultCode, data);
      }
@@ -282,24 +289,50 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
      public static File GetUserExternalFileSelection() {
 
+          //String externalFileProviderAuth = MainActivity.mainActivityInstance.getApplicationContext().getPackageName() + ".com.maxieds.ParklinkMCTLibraryDemo.externalFileProvider";
+          //File selectedFilePath = new File("userKeysFilePath.lst");
+          //Uri sharedFileUri = FileProvider.getUriForFile(MainActivity.mainActivityInstance, externalFileProviderAuth, selectedFilePath);
+          //ShareCompat.IntentBuilder intentBuilder = ShareCompat.IntentBuilder.from(MainActivity.mainActivityInstance).addStream(sharedFileUri);
+          //Intent chooserIntent = intentBuilder.createChooserIntent();
+          //chooserIntent.setDataAndType(sharedFileUri, "*/*");
+          //Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+          //intent.addCategory(Intent.CATEGORY_OPENABLE);
+          //intent.setType("*/*");
+          //MainActivity.mainActivityInstance.startActivityForResult(intent, FILE_SELECT_CODE);
+
+          //Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+          //intent.addCategory(Intent.CATEGORY_OPENABLE);
+          //intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+          //intent.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath() + "/"), "*/*");
+          //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
           Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
           intent.addCategory(Intent.CATEGORY_OPENABLE);
-          intent.setDataAndType(Uri.parse("//sdcard//Download//"), "*/*");
+          intent.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath() + "/"), "*/*");
           try {
                mainActivityInstance.startActivityForResult(Intent.createChooser(intent, "Select a Text File of Your Keys to Upload!"), FILE_SELECT_CODE);
           } catch (ActivityNotFoundException e) {
-               Log.e(TAG, "Unable to choose external file: " + e.getMessage());
+               MainActivity.mainActivityInstance.DisplayToastMessage("Unable to choose external file: " + e.getMessage(), Toast.LENGTH_LONG);
                return null;
           }
-          String filePathSelection = "";
           try {
                Looper.loop();
           } catch (RuntimeException rte) {
-               filePathSelection = rte.getMessage().split("java.lang.RuntimeException: ")[1];
-               Log.i(TAG, "User Selected Data File: " + filePathSelection);
-          }
-          return new File(filePathSelection);
+               Log.e(TAG,"Len: " + rte.getMessage().split("java.lang.RuntimeException: ").length);
+               Log.e(TAG,"Len: " + rte.getMessage().split("java.lang.RuntimeException: ")[0]   );
+               String filePathSelection = rte.getMessage().split("java.lang.RuntimeException: ")[1];
+               MainActivity.mainActivityInstance.DisplayToastMessage("User Selected Data File: " + filePathSelection, Toast.LENGTH_LONG);
+               return new File(filePathSelection);
+               //try {
+                    //InputStream userSelectedFileStream = MainActivity.mainActivityInstance.getContentResolver().openInputStream(userSelectedFileUri);
+                    //return userSelectedFileStream;
+                    //return null;
+               //}
+               //catch(IOException ioe) {
+               //     ioe.printStackTrace();
+               //}
 
+          }
+          return null;
      }
 
      private void ClearActiveDisplayWindow() {
@@ -366,6 +399,15 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           tagScanHandler.postDelayed(tagScanRunnable, TAG_WRITE_TIMEOUT);
      }
 
+     public void ActionButtonExtractKeysFromDumpImage(View btnView) {
+          Spinner rawFileSrcSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
+          String rawFilePath = rawFileSrcSpinner.getSelectedItem().toString();
+          int rawFileResID = getResources().getIdentifier(rawFilePath, "raw", getPackageName());
+          InputStream dumpFileStream = getResources().openRawResource(rawFileResID);
+          String[] imageKeyData = MifareClassicTag.ExtractMFC1TagKeysFromDumpImage(dumpFileStream);
+          LoadKeysDialog.AppendPresetKeys(imageKeyData);
+     }
+
      public void ActionButtonDisplayHelpForMCTLibrarySettingsTextView(View helpBtnView) {
           String helpMsg = "A sector read may fail if the attempted authentications with KeyA and/or KeyB" +
                            " are unsuccessful. This may happen even if the attempted auth keys are correct to" +
@@ -383,8 +425,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           DisplayToastMessage(helpMsg, android.widget.Toast.LENGTH_LONG);
      }
 
-     private static final int TAG_SCANNING_TIME = 5000;
-     private static final int TAG_WRITE_TIMEOUT = 3500;
+     private static final int TAG_SCANNING_TIME = 8000;
+     private static final int TAG_WRITE_TIMEOUT = 6000;
      private static Handler tagScanHandler = new Handler();
      private static Runnable tagScanRunnable = new Runnable() {
           public void run() {
@@ -422,7 +464,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                MCTUtils.GetTimestamp().replace(" ", "").replace("@", "-"));
           for(int ext = 0; ext < 2; ext++) {
                String fileExt = ext != 0 ? ".dmp" : ".hex";
-               File downloadsFolder = new File("//sdcard//Download//" + OUTPUT_FILE_APP_DIRECTORY + "//");
+               File downloadsFolder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "//" + OUTPUT_FILE_APP_DIRECTORY + "//");
                File outfile = new File(downloadsFolder, outfileBasePath + fileExt);
                boolean docsFolderExists = true;
                if (!downloadsFolder.exists()) {
@@ -446,8 +488,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          isMediaScannable = false;
                          downloadDesc = "MFC1K Data Dump Image (Binary Format)" + outfile.getName();
                     }
-                    downloadManager.addCompletedDownload(OUTPUT_FILE_APP_DIRECTORY + "/" + outfile.getName(),
-                                                         downloadDesc,
+                    downloadManager.addCompletedDownload(downloadDesc,
+                                              OUTPUT_FILE_APP_DIRECTORY + "/" + outfile.getName(),
                                                          isMediaScannable, mimeType, outfile.getAbsolutePath(),
                                                          outfile.length(),true);
                } catch (IOException ioe) {
@@ -465,12 +507,12 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      }
 
      public void ActionButtonClear(View btnView) {
+          MifareClassicToolLibrary.EnableProgressBarDisplay(false);
           LoadKeysDialog.ClearKeyData();
           if(activeMFCTag != null) {
                ClearActiveDisplayWindow();
                activeMFCTag = null;
           }
-          ClearActiveDisplayWindow();
      }
 
      public void ActionButtonCheckForMFCSupport(View btnView) {

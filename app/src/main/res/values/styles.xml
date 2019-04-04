@@ -22,7 +22,7 @@
         <item name="android:background">@color/transparent</item>
         <item name="android:textColorPrimary">@color/actionBarTitleTextColor</item>
         <item name="android:textColor">@color/actionBarTitleTextColor</item>
-        <item name="android:textSize">9sp</item>
+        <item name="android:textSize">6sp</item>
         <item name="android:subtitleTextColor">@color/actionBarSubtitleTextColor</item>
         <item name="android:textStyle">normal|bold|italic</item>
         <item name="android:fontFamily">sans-serif-smallcaps</item>

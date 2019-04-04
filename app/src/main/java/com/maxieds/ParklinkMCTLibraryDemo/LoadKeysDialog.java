@@ -10,6 +10,8 @@ import android.content.Context;
 import android.view.View;
 
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -73,10 +75,8 @@ public class LoadKeysDialog {
      }
 
      public static void ClearKeyData() {
-          if(!staticVariablesInit) {
-               initStaticVariablesBeforeClass();
-          }
           presetTestKeys.clear();
+          initStaticVariablesBeforeClass();
      }
 
      public LoadKeysDialog(Activity mainActivityContext) {
@@ -94,7 +94,7 @@ public class LoadKeysDialog {
           dialog.setTitle(R.string.loadKeysDialogTitle);
 
           Spinner dialogKeyDisplaySpinner = new Spinner((Context) mainActivityRef);
-          dialogKeyDisplaySpinner.setPadding(20, 15, 20, 5);
+          dialogKeyDisplaySpinner.setPadding(45, 80, 45, 15);
           ArrayAdapter<String> dialogKeyDisplaySpinnerAdapter = new ArrayAdapter<String>(
                mainActivityRef, android.R.layout.simple_spinner_item, presetTestKeys);
           dialogKeyDisplaySpinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -103,9 +103,9 @@ public class LoadKeysDialog {
           dialog.setView(dialogKeyDisplaySpinnerFinal);
 
           dialog.setMessage(R.string.loadKeysDialogDesc);
-          dialog.setPositiveButton("Done", null);
-          dialog.setNeutralButton("Preset Keys", null);
-          dialog.setNegativeButton("Standard Keys", null);
+          dialog.setPositiveButton("Key File", null);
+          dialog.setNeutralButton("Parklink Keys", null);
+          dialog.setNegativeButton("Extended Keys", null);
           dialog.setInverseBackgroundForced(true);
           displayAddKeysDialog = dialog.create();
           displayAddKeysDialog.setOnShowListener(new DialogInterface.OnShowListener() {
@@ -127,7 +127,7 @@ public class LoadKeysDialog {
                               ((BaseAdapter) dialogKeyDisplaySpinnerFinal.getAdapter()).notifyDataSetChanged();
                          }
                     });
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(10);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(9);
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setCompoundDrawablesWithIntrinsicBounds(
                          mainActivityRef.getResources().getDrawable(R.drawable.load_keys_from_file_icon),
                          null,
@@ -143,14 +143,34 @@ public class LoadKeysDialog {
                               ((BaseAdapter) dialogKeyDisplaySpinnerFinal.getAdapter()).notifyDataSetChanged();
                          }
                     });
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextSize(10);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_NEUTRAL).setTextSize(9);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                         @Override
+                         public void onClick(View view) {
+                              mainActivityRef.runOnUiThread(new Runnable() {
+                                   public void run() {
+                                        File userKeysFileSelection = MainActivity.mainActivityInstance.GetUserExternalFileSelection();
+                                        try {
+                                             InputStream userKeysFileStream = new FileInputStream(userKeysFileSelection);
+                                             String[] keyDataArray = MCTUtils.ReadKeysFromTextFile(userKeysFileStream);
+                                             LoadKeysDialog.AppendPresetKeys(keyDataArray);
+                                             ((BaseAdapter) dialogKeyDisplaySpinnerFinal.getAdapter()).notifyDataSetChanged();
+                                             userKeysFileStream.close();
+                                        } catch(Exception ioe) {
+                                             ioe.printStackTrace();
+                                             MainActivity.mainActivityInstance.DisplayToastMessage(ioe.getMessage());
+                                        }
+                                   }
+                              });
+                         }
+                    });
                     displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setCompoundDrawablesWithIntrinsicBounds(
                          mainActivityRef.getResources().getDrawable(R.drawable.done_button_icon),
                          null,
                          null,
                          null
                     );
-                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(10);
+                    displayAddKeysDialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(9);
                }
           });
           return displayAddKeysDialog != null;

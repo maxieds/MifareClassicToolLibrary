@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">Parklink MCT Library Demo</string>
+    <string name="app_name">Mifare Classic Tool Library</string>
+    <string name="app_desc">Demo application for the Parklink Mifare Classic Tool Library</string>
     <string name="action_settings">Settings</string>
 
     <string name="loadKeysDialogTitle">"Choose preset key A/B's for testing ..."</string>
@@ -31,6 +32,7 @@
         <item>mfc1k_9862453e4061_original</item>
         <item>mfc1k_9862453e4061_original_correctly_corrupt</item>
         <item>mfc1k_d7456978e639_noralsy</item>
+        <item>mfc1k_blank_tag</item>
     </string-array>
 
 </resources>

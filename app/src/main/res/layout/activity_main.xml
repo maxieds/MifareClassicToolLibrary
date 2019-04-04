@@ -6,20 +6,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.maxieds.ParklinkMCTLibraryDemo.MainActivity"
-    >
+    tools:context="com.maxieds.ParklinkMCTLibraryDemo.MainActivity">
 
     <android.widget.Toolbar
-        style="@style/ActionBarTheme"
         android:id="@+id/toolbarActionBar"
+        style="@style/ActionBarTheme"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:title="@string/app_name"
-        android:logo="@drawable/main_action_bar_logo_icon"
         android:background="@drawable/ui_gradient"
-        android:theme="@style/ActionBarTheme"
+        android:logo="@drawable/main_action_bar_logo_icon"
         android:popupTheme="@style/AppTheme.PopupOverlay"
-    />
+        android:theme="@style/ActionBarTheme"
+        android:title="@string/app_name" />
 
     <View
         android:layout_width="match_parent"
@@ -29,16 +27,15 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:background="@color/deviceStatusBarBackgroundColor"
-        android:padding="0dp"
-        >
+        android:orientation="horizontal"
+        android:padding="0dp">
 
         <GridLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginBottom="0dp"
+            android:layout_weight="1"
             android:background="@color/deviceStatusBarBackgroundColor"
             android:columnCount="3"
             android:padding="0dp"
@@ -47,8 +44,8 @@
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:paddingRight="4dp"
                 android:paddingLeft="3dp"
+                android:paddingRight="4dp"
                 android:src="@drawable/tag_icon" />
 
             <TextView
@@ -59,8 +56,7 @@
                 android:text="TAG: "
                 android:textColor="@color/deviceStatusBarHeaderTextColor"
                 android:textSize="12sp"
-                android:textStyle="normal|bold"
-                />
+                android:textStyle="normal|bold" />
 
             <TextView
                 android:id="@+id/deviceStatusBarTagType"
@@ -71,14 +67,13 @@
                 android:text=""
                 android:textColor="@color/deviceStatusBarInfoTextColor"
                 android:textSize="12sp"
-                android:textStyle="normal|bold"
-                />
+                android:textStyle="normal|bold" />
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:paddingRight="4dp"
                 android:paddingLeft="3dp"
+                android:paddingRight="4dp"
                 android:src="@drawable/uid_icon" />
 
             <TextView
@@ -89,8 +84,7 @@
                 android:text="UID: "
                 android:textColor="@color/deviceStatusBarHeaderTextColor"
                 android:textSize="12sp"
-                android:textStyle="normal|bold"
-                />
+                android:textStyle="normal|bold" />
 
             <TextView
                 android:id="@+id/deviceStatusBarUID"
@@ -101,14 +95,13 @@
                 android:text=""
                 android:textColor="@color/deviceStatusBarInfoTextColor"
                 android:textSize="12sp"
-                android:textStyle="normal|bold"
-                />
+                android:textStyle="normal|bold" />
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
-                android:paddingRight="4dp"
                 android:paddingLeft="3dp"
+                android:paddingRight="4dp"
                 android:src="@drawable/tag_size_icon" />
 
             <TextView
@@ -119,8 +112,7 @@
                 android:text="DIM: "
                 android:textColor="@color/deviceStatusBarHeaderTextColor"
                 android:textSize="12sp"
-                android:textStyle="normal|bold"
-                />
+                android:textStyle="normal|bold" />
 
             <TextView
                 android:id="@+id/deviceStatusBarSizeDims"
@@ -131,8 +123,7 @@
                 android:text=""
                 android:textColor="@color/deviceStatusBarInfoTextColor"
                 android:textSize="12sp"
-                android:textStyle="normal|bold"
-                />
+                android:textStyle="normal|bold" />
 
         </GridLayout>
 
@@ -140,30 +131,27 @@
             android:id="@+id/haveActiveTagIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="2dp"
-            android:src="@drawable/have_active_tag_icon"
             android:layout_gravity="center_horizontal|center_vertical|left"
-            />
+            android:paddingLeft="2dp"
+            android:src="@drawable/have_active_tag_icon" />
 
         <ImageView
             android:id="@+id/activeTagScanningIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="2dp"
-            android:src="@drawable/active_scanning_icon"
             android:layout_gravity="center_horizontal|center_vertical|left"
-            />
+            android:paddingLeft="2dp"
+            android:src="@drawable/active_scanning_icon" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/about_gear_icon"
+            android:layout_gravity="center_horizontal|center_vertical|right"
             android:background="@color/deviceStatusBarBackgroundColor"
             android:onClick="ActionButtonDisplayAppAboutInfo"
             android:paddingLeft="2dp"
             android:paddingRight="6dp"
-            android:layout_gravity="center_horizontal|center_vertical|right"
-            />
+            android:src="@drawable/about_gear_icon" />
 
     </LinearLayout>
 
@@ -177,21 +165,19 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:verticalScrollbarPosition="right"
-        android:gravity="bottom"
         android:background="@drawable/ui_gradient"
-        >
+        android:gravity="bottom"
+        android:orientation="vertical"
+        android:verticalScrollbarPosition="right">
 
         <LinearLayout
             android:id="@+id/mainDisplayItemsListLayout"
             android:layout_width="match_parent"
             android:layout_height="fill_parent"
-            android:padding="5dp"
             android:layout_margin="5dp"
-            android:orientation="vertical"
             android:background="@color/transparent"
-        />
+            android:orientation="vertical"
+            android:padding="5dp" />
 
     </ScrollView>
 
@@ -204,15 +190,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/deviceStatusBarBackgroundColor"
-        android:padding="2dp"
         android:drawableLeft="@drawable/library_settings_icon"
         android:drawablePadding="6dp"
+        android:fontFamily="sans-serif"
+        android:padding="2dp"
         android:text="Mifare Classic Tool Library Settings: "
         android:textColor="@color/deviceStatusBarHeaderTextColor"
         android:textSize="16sp"
-        android:textStyle="normal|bold"
-        android:fontFamily="sans-serif"
-        />
+        android:textStyle="normal|bold" />
 
     <View
         android:layout_width="match_parent"
@@ -231,37 +216,34 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@color/transparent"
+            android:fontFamily="sans-serif"
             android:padding="2dp"
             android:text="Retries to auth sector: "
             android:textSize="14sp"
-            android:textStyle="normal|bold"
-            android:fontFamily="sans-serif"
-            />
+            android:textStyle="normal|bold" />
 
         <SeekBar
-            style="@style/SeekBarTheme"
             android:id="@+id/libraryNumRetriesSeekbar"
+            style="@style/SeekBarTheme"
             android:layout_width="190dp"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|center_horizontal"
             android:background="@color/transparent"
-            android:min="0"
             android:max="10"
-            android:progress="1"
+            android:min="0"
             android:paddingLeft="5dp"
             android:paddingRight="5dp"
-            android:layout_gravity="center_vertical|center_horizontal"
-            />
+            android:progress="1" />
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:onClick="ActionButtonDisplayHelpForMCTLibrarySettingsTextView"
-            android:src="@drawable/help_icon"
             android:layout_gravity="center_vertical|right"
+            android:onClick="ActionButtonDisplayHelpForMCTLibrarySettingsTextView"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:paddingBottom="4dp"
-            />
+            android:src="@drawable/help_icon" />
 
     </GridLayout>
 
@@ -274,15 +256,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/deviceStatusBarBackgroundColor"
-        android:padding="2dp"
         android:drawableLeft="@drawable/load_from_file_icon"
         android:drawablePadding="6dp"
+        android:fontFamily="sans-serif"
+        android:padding="2dp"
         android:text="Load MFC1K Dump Data From Local File: "
         android:textColor="@color/deviceStatusBarHeaderTextColor"
         android:textSize="16sp"
-        android:textStyle="normal|bold"
-        android:fontFamily="sans-serif"
-        />
+        android:textStyle="normal|bold" />
 
     <View
         android:layout_width="match_parent"
@@ -292,38 +273,52 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:background="@color/colorAccent"
-        >
+        android:orientation="vertical">
 
         <Spinner
             android:id="@+id/dumpImageRawFilesSrcSpinner"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0.80"
             android:entries="@array/DumpImageRawFiles"
             android:gravity="right|center_vertical"
             android:popupBackground="?colorAccentHighlight"
-            android:spinnerMode="dialog"
-            />
+            android:spinnerMode="dialog" />
 
-        <Button
-            style="@style/GridButtons"
-            android:layout_weight="0.10"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:onClick="ActionButtonLoadDumpImageFromFile"
-            android:drawableLeft="@drawable/load_from_file_icon"
-            android:text="Load Tag ..." />
+            android:background="@color/colorAccent"
+            android:orientation="horizontal">
 
-        <Button
-            style="@style/GridButtons"
-            android:layout_weight="0.10"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="ActionButtonWriteDumpImageToTag"
-            android:drawableLeft="@drawable/write_tag_icon"
-            android:text="Write Tag ..." />
+            <Button
+                style="@style/GridButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.33"
+                android:drawableLeft="@drawable/load_from_file_icon"
+                android:onClick="ActionButtonLoadDumpImageFromFile"
+                android:text="Load Tag ..." />
+
+            <Button
+                style="@style/GridButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.33"
+                android:drawableLeft="@drawable/write_tag_icon"
+                android:onClick="ActionButtonWriteDumpImageToTag"
+                android:text="Write Tag ..." />
+
+            <Button
+                style="@style/GridButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.33"
+                android:drawableLeft="@drawable/load_keys_from_file_icon"
+                android:onClick="ActionButtonExtractKeysFromDumpImage"
+                android:text="Extract Keys ..." />
+
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -336,15 +331,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/deviceStatusBarBackgroundColor"
-        android:padding="2dp"
         android:drawableLeft="@drawable/android_operations_icon"
         android:drawablePadding="6dp"
+        android:fontFamily="sans-serif"
+        android:padding="2dp"
         android:text="Demo Operations: "
         android:textColor="@color/deviceStatusBarHeaderTextColor"
         android:textSize="16sp"
-        android:textStyle="normal|bold"
-        android:fontFamily="sans-serif"
-        />
+        android:textStyle="normal|bold" />
 
     <View
         android:layout_width="match_parent"

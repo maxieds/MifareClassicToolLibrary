@@ -95,6 +95,12 @@ public class MifareClassicTag {
                    if (results[0] != null || results[1] != null) {
                         sectorBlockData = MergeSectorData(results[0], results[1]);
                    }
+                   //else {
+                   //     sectorBlockData = new String[sectorBlockCount];
+                   //     for(int blk = 0; blk < sectorBlockCount; blk++) {
+                   //          sectorBlockData[blk] = NO_DATA;
+                   //     }
+                   //}
               }
               try {
                    m_mfcTag.close();
@@ -173,7 +179,8 @@ public class MifareClassicTag {
                          if (!useAsKeyB) {
                               if (IsKeyBReadable(MCTUtils.HexStringToBytes(ret[last].substring(12, 20)))) {
                                    ret[last] = MCTUtils.BytesToHexString(key) + ret[last].substring(12, 32);
-                              } else {
+                              }
+                              else {
                                    ret[last] = MCTUtils.BytesToHexString(key) + ret[last].substring(12, 20) + NO_KEY;
                               }
                          }
@@ -744,6 +751,7 @@ public class MifareClassicTag {
      }
 
      public static final int MFCLASSIC1K_TAG_SIZE = 1024;
+     public static final int MFCLASSIC1K_SECTOR_COUNT = 16;
      public static final int MFCLASSIC1K_BLOCKS_PER_SECTOR = 4;
      public static final int MFCLASSIC_BLOCK_SIZE = 16;
 
@@ -817,6 +825,40 @@ public class MifareClassicTag {
 
      }
 
+     public static String[] ExtractMFC1TagKeysFromDumpImage(InputStream dumpImageStream) {
+          if(dumpImageStream == null) {
+               return null;
+          }
+          String[] mfcTagKeyData = new String[2 * MFCLASSIC1K_SECTOR_COUNT];
+          byte[] blockBytesBuf = new byte[MFCLASSIC_BLOCK_SIZE];
+          byte[] keyBytes = new byte[6];
+          int blockLineCount = 0, blockInSectorIndex = 0;
+          try {
+               for (int sec = 0; sec < MFCLASSIC1K_SECTOR_COUNT; sec++) {
+                    for(int blk = 1; blk <= MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
+                         if ((blockLineCount = dumpImageStream.read(blockBytesBuf, 0, MFCLASSIC_BLOCK_SIZE)) == -1) {
+                              break;
+                         } else if (blk == MFCLASSIC1K_BLOCKS_PER_SECTOR) { // trailing sector:
+                              System.arraycopy(blockBytesBuf, 0, keyBytes, 0, 6);
+                              mfcTagKeyData[2 * sec] = MCTUtils.BytesToHexString(keyBytes);
+                              System.arraycopy(blockBytesBuf, 10, keyBytes, 0, 6);
+                              mfcTagKeyData[2 * sec + 1] = MCTUtils.BytesToHexString(keyBytes);
+                         }
+                    }
+               }
+               dumpImageStream.close();
+          } catch(IOException ioe) {
+               ioe.printStackTrace();
+               try {
+                    dumpImageStream.close();
+               } catch(IOException closeioe) {
+                    closeioe.printStackTrace();
+               }
+               return null;
+          }
+          return mfcTagKeyData;
+     }
+
      private static final String BLANK_MFC1KTAG_KEYA = "FFFFFFFFFFFF";
      private static final String BLANK_MFC1KTAG_KEYB = "000000000000";
 
@@ -833,7 +875,7 @@ public class MifareClassicTag {
                     throw new MifareClassicLibraryException(NFCErrorException);
                }
                Log.e(TAG, "NFC tag timeout: " + mfcTag.getTimeout());
-               mfcTag.setTimeout(1500);
+               //mfcTag.setTimeout(5000);
           } catch(IOException ioe) {
                ioe.printStackTrace();
                throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
