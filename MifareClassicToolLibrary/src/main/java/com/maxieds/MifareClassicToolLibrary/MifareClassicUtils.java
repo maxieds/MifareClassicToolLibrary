@@ -88,19 +88,25 @@ public class MifareClassicUtils {
                          sectorAddr++;
                          sectorBlockOffset = mfcTag.sectorToBlock(sectorAddr);
                          sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddr);
-                         boolean ableToAuthKeyA = false;
-                         for(int k = 0; k < keyDataList.length; k++) {
-                              byte[] keyBytes = MCTUtils.HexStringToBytes(keyDataList[k]);
-                              if (mfcTag.authenticateSectorWithKeyA(sectorAddr, keyBytes)) {
-                                   activeKeyIndex = k;
-                                   ableToAuthKeyA = true;
-                                   break;
+                         boolean ableToAuthKeyAB = false;
+                         for(int r = 0; r < MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB; r++) {
+                              for (int k = 0; k < keyDataList.length; k++) {
+                                   byte[] keyBytes = MCTUtils.HexStringToBytes(keyDataList[k]);
+                                   if (mfcTag.authenticateSectorWithKeyA(sectorAddr, keyBytes)) {
+                                        activeKeyIndex = k;
+                                        ableToAuthKeyAB = true;
+                                        break;
+                                   } else if (mfcTag.authenticateSectorWithKeyB(sectorAddr, keyBytes)) {
+                                        activeKeyIndex = k;
+                                        ableToAuthKeyAB = true;
+                                        break;
+                                   }
                               }
                          }
-                         if(!ableToAuthKeyA) {
-                              android.util.Log.e(TAG, "Could not auth with keyA on sector #" + sectorAddr);
+                         if(!ableToAuthKeyAB) {
+                              android.util.Log.e(TAG, "Could not auth with keyA/B on sector #" + sectorAddr);
                               writeTagStatus = false;
-                              continue;
+                              break;
                          }
                          android.util.Log.i(TAG, "Successfully authed with tag on sector #" + sectorAddr + " with key " + keyDataList[activeKeyIndex]);
                     }

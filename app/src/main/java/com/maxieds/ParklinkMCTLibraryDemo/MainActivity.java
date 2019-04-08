@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
@@ -117,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           setActionBar(toolbar);
 
           SeekBar numAuthRetriesSeekbar = (SeekBar) findViewById(R.id.libraryNumRetriesSeekbar);
-          numAuthRetriesSeekbar.setProgress(NUM_RETRIES_TO_AUTH_SETTING);
           numAuthRetriesSeekbar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
                @Override
                public void onStopTrackingTouch(SeekBar seekBar) {}
@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                     MainActivity.mainActivityInstance.UpdateSharedSettings();
                }
           });
+          numAuthRetriesSeekbar.setProgress(NUM_RETRIES_TO_AUTH_SETTING);
 
           Spinner mfc1kDumpImageSelectSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
           mfc1kDumpImageSelectSpinner.setSelection(MFC1K_DUMP_IMAGE_PICKER_INDEX);
@@ -181,9 +182,13 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
      public Activity GetApplicationActivity() { return this; }
 
+     private static final int TOAST_BACKGROUND_COLOR = R.color.colorAccentHighlight;
+
      protected void DisplayToastMessage(String toastMsg, int toastLength) {
           Toast toastDisplay = Toast.makeText(this, toastMsg, toastLength);
           toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
+          int toastBackgroundColor = getColor(TOAST_BACKGROUND_COLOR);
+          toastDisplay.getView().getBackground().setColorFilter(toastBackgroundColor, PorterDuff.Mode.SRC_IN);
           toastDisplay.show();
           Log.i(TAG, "TOAST MSG DISPLAYED: " + toastMsg);
      }
@@ -516,17 +521,17 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          isMediaScannable = true;
                          downloadDesc = "MFC1K Data Dump Image (Hex Bytes)" + outfile.getName();
                          toastStatusMsg += String.format(Locale.US, "Wrote dump data file \"%s\" (Hex Bytes) @ %dB.\n",
-                                                         outfile.getPath(), outfile.getTotalSpace());
+                                                         outfile.getPath(), outfile.length());
                     } else {
                          activeMFCTag.ExportToBinaryDumpFile(outfile.getAbsolutePath());
                          mimeType = "application/octet-stream";
                          isMediaScannable = false;
                          downloadDesc = "MFC1K Data Dump Image (Binary Format)" + outfile.getName();
                          toastStatusMsg += String.format(Locale.US, "Wrote dump data file \"%s\" (Binary Format) @ %dB.\n",
-                                                         outfile.getPath(), outfile.getTotalSpace());
+                                                         outfile.getPath(), outfile.length());
                     }
-                    downloadManager.addCompletedDownload(downloadDesc,
-                                              OUTPUT_FILE_APP_DIRECTORY + "/" + outfile.getName(),
+                    downloadManager.addCompletedDownload(OUTPUT_FILE_APP_DIRECTORY + "/" + outfile.getName(),
+                                                         downloadDesc,
                                                          isMediaScannable, mimeType, outfile.getAbsolutePath(),
                                                          outfile.length(),true);
                } catch (IOException ioe) {

@@ -208,7 +208,7 @@ public class MifareClassicToolLibrary {
 
      public static String GetAccessConditionsDescription(byte[][] sectorAccessBits, int blockIndex, boolean isSectorTrailer) {
           if(sectorAccessBits == null || blockIndex < 0 || blockIndex >= sectorAccessBits[0].length) {
-               return "<INVALID-DATA>";
+               return "";
           }
           int accessBitsNumber = (sectorAccessBits[0][blockIndex] << 2) | (sectorAccessBits[1][blockIndex] << 1) | sectorAccessBits[0][blockIndex];
           String resAccessCondsPrefix = isSectorTrailer ? "ac_sector_trailer_" : "ac_data_block_";
@@ -218,7 +218,7 @@ public class MifareClassicToolLibrary {
                int accessCondsResId = R.string.class.getField(accessCondsResIdStr).getInt(null);
                return appContext.getResources().getString(accessCondsResId);
           } catch(Exception nsfe) {
-               return "<UNKNOWN-DATA>";
+               return "";
           }
      }
 
@@ -353,11 +353,7 @@ public class MifareClassicToolLibrary {
      private static Handler progressBarDisplayHandler = new Handler();
      private static Runnable progressBarDisplayRunnable = new Runnable() {
           public void run() {
-               if (toastsDismissed && progressBarToast != null) {
-                    //progressBarToast.cancel();
-                    //progressBarToast = null;
-               } else {
-                    //progressBarDisplayHandler.postDelayed(progressBarDisplayRunnable, STATUS_TOAST_DISPLAY_TIME);
+               if (!toastsDismissed && progressBarToast != null) {
                     DisplayProgressBar(progressBarSliderName, progressBarPos, progressBarTotal);
                }
           }
@@ -369,7 +365,7 @@ public class MifareClassicToolLibrary {
           progressBarTotal = totalPos;
           final int statusBarMarkerIdx = Math.min((int) ((curPos - 1) * PROGRESS_BAR_POSITIONS.length / totalPos),
                PROGRESS_BAR_POSITIONS.length - 1);
-          final String statusBarMsg = String.format(Locale.US, "%s % 3d / % 3d (%.3g %%)",
+          final String statusBarMsg = String.format(Locale.US, "%s % 3d / % 3d (% .2g %%)",
                thingsName, curPos, totalPos, (float) curPos / totalPos * 100.0);
           final Activity mainAppActivity = localMFCDataIface.GetApplicationActivity();
           mainAppActivity.runOnUiThread(new Runnable() {
@@ -384,7 +380,7 @@ public class MifareClassicToolLibrary {
                     ((ImageView) toastProgressView.findViewById(R.id.progressBarImageMarker)).setImageDrawable(statusBarMarkerImage);
                     ((TextView) toastProgressView.findViewById(R.id.progressBarText)).setText(statusBarMsg);
                     progressBarToast.setView(toastProgressView);
-                    progressBarDisplayHandler.postDelayed(progressBarDisplayRunnable, STATUS_TOAST_DISPLAY_TIME + 1000);
+                    progressBarDisplayHandler.postDelayed(progressBarDisplayRunnable, STATUS_TOAST_DISPLAY_TIME + 750);
                     progressBarToast.show();
                }
           });

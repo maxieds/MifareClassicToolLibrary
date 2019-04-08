@@ -48,7 +48,7 @@ public class SectorUIDisplay {
                tvSectorDisplayHeader.append(" (READ FAILED)");
           }
           TextView tvSectorDisplayBytes = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayBytesText);
-          if(sectorBlockData.length == 0) {
+          if(sectorBlockData == null || sectorBlockData.length == 0) {
                tvSectorDisplayHeader.append(" (NO DATA)");
                for(int blk = 0; blk < MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
                     if(blk > 0) {
@@ -60,7 +60,7 @@ public class SectorUIDisplay {
           }
           String accessBytesStr = sectorBlockData[sectorBlockData.length - 1].substring(12, 20);
           byte[][] accessBits = MifareClassicToolLibrary.GetAccessBitsArray(MCTUtils.HexStringToBytes(accessBytesStr));
-          for(int blk = 0; blk < sectorBlockData.length; blk++) {
+          for(int blk = 0; blk < Math.min(sectorBlockData.length, MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR); blk++) {
                if(blk > 0) {
                     tvSectorDisplayBytes.append("\n");
                }
@@ -80,7 +80,10 @@ public class SectorUIDisplay {
                     tvSectorDisplayBytes.append(GetMarkedByteDifferences(sectorBlockData[blk].substring(12, 20), expectedDiffData[blk].substring(12, 20), R.color.AccessBytesHighlight));
                     tvSectorDisplayBytes.append(GetMarkedByteDifferences(sectorBlockData[blk].substring(20, 32), expectedDiffData[blk].substring(20, 32), R.color.KeyBHighlight));
                }
-               String accessBitsStr = String.format(Locale.US, "%d%d%d", (int) accessBits[0][blk], (int) accessBits[1][blk], (int) accessBits[2][blk]);
+               String accessBitsStr = "XXX";
+               if(accessBits != null) {
+                    accessBitsStr = String.format(Locale.US, "%d%d%d", (int) accessBits[0][blk], (int) accessBits[1][blk], (int) accessBits[2][blk]);
+               }
                tvSectorDisplayBytes.append(GetColorString("  (", R.color.AccessBitsSettingsParens));
                tvSectorDisplayBytes.append(GetColorString(accessBitsStr, R.color.AccessBitsSettings));
                tvSectorDisplayBytes.append(GetColorString(")", R.color.AccessBitsSettingsParens));

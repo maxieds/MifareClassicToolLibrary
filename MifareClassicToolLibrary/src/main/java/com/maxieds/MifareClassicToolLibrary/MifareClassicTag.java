@@ -590,6 +590,10 @@ public class MifareClassicTag {
           }
           SetMappingRange(0, GetSectorCount() - 1);
           SparseArray<String[]> sectorReadData = ReadAsMuchAsPossible();
+          if(sectorReadData == null) {
+               failedSectors.addAll(tagSectors);
+               return true;
+          }
           for(int kidx = 0; kidx < sectorReadData.size(); kidx++) {
                int sectorAddr = sectorReadData.keyAt(kidx);
                String[] sectorBlockData = sectorReadData.valueAt(kidx);
@@ -699,7 +703,7 @@ public class MifareClassicTag {
                          tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
                     }
                     if(displayGUIProgressBar) {
-                         MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i + 1, keyMap.size() + 1);
+                         MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i, keyMap.size());
                     }
                }
                return resultSparseArray;
@@ -726,9 +730,6 @@ public class MifareClassicTag {
       */
      private SparseArray<String[]> ReadAsMuchAsPossible() throws MifareClassicLibraryException {
           mKeyMapStatus = GetSectorCount();
-          if(displayGUIProgressBar) {
-               MifareClassicToolLibrary.DisplayProgressBar("OPS", 0, GetSectorCount() + 1);
-          }
           while (BuildNextKeyMapPart() < GetSectorCount()-1);
           return ReadAsMuchAsPossible(mKeyMap);
      }
@@ -778,6 +779,11 @@ public class MifareClassicTag {
                Log.d(TAG, "Building ... Number of keys = " + mKeysWithOrder.size());
                keysloop:
                for (int i = 0; i < mKeysWithOrder.size(); i++) {
+                    if(displayGUIProgressBar) {
+                         MifareClassicToolLibrary.DisplayProgressBar("KEYS",
+                                          mKeyMapStatus * mKeysWithOrder.size() + i,
+                                         GetSectorCount() * mKeysWithOrder.size());
+                    }
                     byte[] key = mKeysWithOrder.get(i);
                     for (int j = 0; j < retryAuthCount+1;) {
                          try {
