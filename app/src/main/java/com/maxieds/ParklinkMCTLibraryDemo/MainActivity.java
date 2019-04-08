@@ -257,14 +257,15 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                     vibObj.vibrate(35);
                     vibObj.vibrate(100);
                     String instStr = String.format(Locale.US, getString(R.string.newTagInstructions),
-                                                   MCTUtils.BytesToHexString(nfcTag.getId()));
+                                                   MCTUtils.BytesToHexString(nfcTag.getId()),
+                                                   READY_WRITE_BLANK_TAG ? "write" : "read");
                     DisplayToastMessage(instStr, Toast.LENGTH_LONG);
                     SetHaveActiveTagIcon(true);
                     AsyncTask.execute(new Runnable() {
                          @Override
                          public void run() {
                               try {
-                                   MifareClassicToolLibrary.EnableProgressBarDisplay(true);
+                                   //MifareClassicToolLibrary.EnableProgressBarDisplay(true);
                                    if(READY_WRITE_BLANK_TAG) {
                                         READY_WRITE_BLANK_TAG = false;
                                         Spinner rawFileSrcSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
@@ -272,6 +273,12 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                         int rawDumpResID = MainActivity.mainActivityInstance.getResources().getIdentifier(
                                                            resFilePath, "raw", MainActivity.mainActivityInstance.getPackageName());
                                         MifareClassicUtils.WriteBlankMFC1KTag(nfcTag, rawDumpResID, LoadKeysDialog.GetPresetKeys());
+                                        MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
+                                             @Override
+                                             public void run() {
+                                                  MainActivity.mainActivityInstance.DisplayToastMessage("Done writing tag!", Toast.LENGTH_LONG);
+                                             }
+                                        });
                                    }
                                    else {
                                         MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), true);

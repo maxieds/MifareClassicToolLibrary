@@ -39,8 +39,8 @@
         => MAGENTA = Higlighted tag differences\n
     </string>
 
-    <string name="newTagInstructions">"Found new tag with UID=%s.\nHold the tag in place so we can read its contents ...</string>
-    <string name="ignoringTagFmt">"Not actively scanning or waiting to write blank tag:\nIgnoring tag with UID=%s."</string>
+    <string name="newTagInstructions">"Found new tag with UID=%s.\nHold the tag in place so we can %s its contents ...</string>
+    <string name="ignoringTagFmt">"Not actively scanning or waiting to write blank tag... Ignoring tag with UID=%s."</string>
     <string name="numRetriesToAuthSettingHelp">A sector read may fail if the attempted authentications with KeyA and/or KeyB
                            are unsuccessful. This may happen even if the attempted auth keys are correct to
                            unlock the sector data. The setting specifies the number of retries on failed

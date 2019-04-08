@@ -360,6 +360,11 @@ public class MifareClassicToolLibrary {
      };
 
      public static void DisplayProgressBar(String thingsName, int curPos, int totalPos) {
+          if(!thingsName.equals(progressBarSliderName) || curPos != progressBarPos || totalPos != progressBarTotal) {
+               if(!toastsDismissed) {
+                    progressBarDisplayHandler.removeCallbacks(progressBarDisplayRunnable);
+               }
+          }
           progressBarSliderName = thingsName;
           progressBarPos = curPos;
           progressBarTotal = totalPos;
@@ -371,8 +376,7 @@ public class MifareClassicToolLibrary {
           mainAppActivity.runOnUiThread(new Runnable() {
                @Override
                public void run() {
-                    progressBarToast = Toast.makeText(localMFCDataIface.GetApplicationActivity(), statusBarMsg,
-                         STATUS_TOAST_DISPLAY_TIME);
+                    progressBarToast = Toast.makeText(localMFCDataIface.GetApplicationActivity(), statusBarMsg, STATUS_TOAST_DISPLAY_TIME);
                     progressBarToast.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL, 0, 0);
                     LayoutInflater layoutInflater = mainAppActivity.getLayoutInflater();
                     View toastProgressView = layoutInflater.inflate(R.layout.status_bar_layout, null);
@@ -380,7 +384,9 @@ public class MifareClassicToolLibrary {
                     ((ImageView) toastProgressView.findViewById(R.id.progressBarImageMarker)).setImageDrawable(statusBarMarkerImage);
                     ((TextView) toastProgressView.findViewById(R.id.progressBarText)).setText(statusBarMsg);
                     progressBarToast.setView(toastProgressView);
-                    progressBarDisplayHandler.postDelayed(progressBarDisplayRunnable, STATUS_TOAST_DISPLAY_TIME + 750);
+                    if(!toastsDismissed) {
+                         progressBarDisplayHandler.postDelayed(progressBarDisplayRunnable, STATUS_TOAST_DISPLAY_TIME + 1000);
+                    }
                     progressBarToast.show();
                }
           });

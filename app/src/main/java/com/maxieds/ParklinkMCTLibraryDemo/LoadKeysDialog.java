@@ -74,7 +74,7 @@ public class LoadKeysDialog {
                }
           }
           presetTestKeys.addAll(keyDataCopy);
-          //Collections.sort(presetTestKeys, Collator.getInstance());
+          Collections.sort(presetTestKeys, Collator.getInstance());
           return true;
      }
 

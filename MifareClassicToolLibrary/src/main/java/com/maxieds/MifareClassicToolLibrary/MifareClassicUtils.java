@@ -8,6 +8,7 @@ import java.util.Locale;
 
 import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.GenericMFCException;
 import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.NFCErrorException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.NoKeysFoundException;
 
 public class MifareClassicUtils {
 
@@ -64,7 +65,7 @@ public class MifareClassicUtils {
                if(!mfcTag.isConnected()) {
                     throw new MifareClassicLibraryException(NFCErrorException);
                }
-               android.util.Log.e(TAG, "NFC tag timeout: " + mfcTag.getTimeout());
+               Log.e(TAG, "NFC tag timeout: " + mfcTag.getTimeout());
                mfcTag.setTimeout(1500);
           } catch(java.io.IOException ioe) {
                ioe.printStackTrace();
@@ -104,11 +105,12 @@ public class MifareClassicUtils {
                               }
                          }
                          if(!ableToAuthKeyAB) {
-                              android.util.Log.e(TAG, "Could not auth with keyA/B on sector #" + sectorAddr);
+                              Log.e(TAG, "Could not auth with keyA/B on sector #" + sectorAddr);
                               writeTagStatus = false;
-                              break;
+                              rawFileStream.close();
+                              throw new MifareClassicLibraryException(NoKeysFoundException, "Could not auth with keyA/B on sector #" + sectorAddr);
                          }
-                         android.util.Log.i(TAG, "Successfully authed with tag on sector #" + sectorAddr + " with key " + keyDataList[activeKeyIndex]);
+                         Log.d(TAG, "Successfully authed with tag on sector #" + sectorAddr + " with key " + keyDataList[activeKeyIndex]);
                     }
                     if(sectorAddr > 0 || curSectorBlock > 0) {
                          mfcTag.writeBlock(sectorBlockOffset + curSectorBlock, dumpFileReadBuf);

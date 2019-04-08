@@ -677,6 +677,9 @@ public class MifareClassicTag {
                resultSparseArray = new SparseArray<>(keyMap.size());
                // For all entries in map do:
                for (int i = 0; i < keyMap.size(); i++) {
+                    if(displayGUIProgressBar) {
+                         MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i, keyMap.size());
+                    }
                     String[][] results = new String[2][];
                     if (keyMap.valueAt(i)[0] != null) {
                          // Read with key A.
@@ -701,9 +704,6 @@ public class MifareClassicTag {
                          Log.d(TAG, "Merging sector #" + sectorAddr);
                          resultSparseArray.put(sectorAddr, tagSectors.get(sectorAddr).MergeSectorData(results[0], results[1]));
                          tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
-                    }
-                    if(displayGUIProgressBar) {
-                         MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i, keyMap.size());
                     }
                }
                return resultSparseArray;
