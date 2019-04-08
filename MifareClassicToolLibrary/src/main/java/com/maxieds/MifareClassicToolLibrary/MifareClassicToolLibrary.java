@@ -43,6 +43,8 @@ public class MifareClassicToolLibrary {
 
      private static MifareClassicDataInterface localMFCDataIface = null;
 
+     public static MifareClassicDataInterface GetDataInterface() { return localMFCDataIface; }
+
      public static String GetLibraryVersion() {
           return String.format(Locale.US, "v%s (%s)", BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
      }

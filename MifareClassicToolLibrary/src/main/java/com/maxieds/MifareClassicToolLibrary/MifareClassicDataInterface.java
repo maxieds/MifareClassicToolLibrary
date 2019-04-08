@@ -10,4 +10,7 @@ public interface MifareClassicDataInterface {
      Context GetApplicationContext();
      Activity GetApplicationActivity();
 
+     void PostTagScanKeyMapProgress(int position, int total);
+     void PostTagScanSectorReadProgress(int position, int total);
+
 }

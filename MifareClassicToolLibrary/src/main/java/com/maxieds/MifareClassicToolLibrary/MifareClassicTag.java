@@ -680,6 +680,7 @@ public class MifareClassicTag {
                     if(displayGUIProgressBar) {
                          MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i, keyMap.size());
                     }
+                    MifareClassicToolLibrary.GetDataInterface().PostTagScanSectorReadProgress(i, keyMap.size());
                     String[][] results = new String[2][];
                     if (keyMap.valueAt(i)[0] != null) {
                          // Read with key A.
@@ -784,6 +785,7 @@ public class MifareClassicTag {
                                           mKeyMapStatus * mKeysWithOrder.size() + i,
                                          GetSectorCount() * mKeysWithOrder.size());
                     }
+                    MifareClassicToolLibrary.GetDataInterface().PostTagScanKeyMapProgress(mKeyMapStatus * mKeysWithOrder.size() + i, GetSectorCount() * mKeysWithOrder.size());
                     byte[] key = mKeysWithOrder.get(i);
                     for (int j = 0; j < retryAuthCount+1;) {
                          try {

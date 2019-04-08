@@ -25,6 +25,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -182,6 +183,10 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
      public Activity GetApplicationActivity() { return this; }
 
+     public void PostTagScanKeyMapProgress(int position, int total) {}
+
+     public void PostTagScanSectorReadProgress(int position, int total) {}
+
      private static final int TOAST_BACKGROUND_COLOR = R.color.colorAccentHighlight;
 
      protected void DisplayToastMessage(String toastMsg, int toastLength) {
@@ -281,7 +286,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                         });
                                    }
                                    else {
-                                        MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), true);
+                                        boolean displayProgressBar = ((CheckBox) findViewById(R.id.displayGUITagScanProgressBar)).isChecked();
+                                        MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), displayProgressBar);
                                         MainActivity.mainActivityInstance.activeMFCTag = mfcTag;
                                         MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
                                              @Override
