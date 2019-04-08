@@ -1,49 +1,54 @@
 package com.maxieds.ParklinkMCTLibraryDemo;
 
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.content.Intent;
-import android.os.Handler;
+import android.Manifest;
+import android.app.Activity;
+import android.app.DownloadManager;
 import android.content.Context;
-import android.view.Gravity;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
-import android.os.Vibrator;
-import android.database.Cursor;
-import android.provider.OpenableColumns;
-import android.net.Uri;
-import android.content.ActivityNotFoundException;
-import android.os.Looper;
-import android.support.v7.app.AppCompatActivity;
-import android.widget.Toolbar;
-import android.widget.Spinner;
-import android.support.v7.app.AlertDialog;
-import android.widget.ImageView;
 import android.os.AsyncTask;
-import android.app.Activity;
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.app.DownloadManager;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Vibrator;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.os.Environment;
-import android.support.v4.app.ShareCompat;
-import android.support.v4.content.FileProvider;
-
-import java.io.File;
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.Locale;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
-import com.maxieds.MifareClassicToolLibrary.MifareClassicTag;
-import com.maxieds.MifareClassicToolLibrary.MifareClassicToolLibrary;
-import com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException;
 import com.maxieds.MifareClassicToolLibrary.MifareClassicDataInterface;
+import com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException;
+import com.maxieds.MifareClassicToolLibrary.MifareClassicTag;
+import com.maxieds.MifareClassicToolLibrary.MifareClassicUtils;
+import com.maxieds.MifareClassicToolLibrary.MifareClassicToolLibrary;
+
+import com.nononsenseapps.filepicker.FilePickerActivity;
+import com.nononsenseapps.filepicker.Utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Locale;
+import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity implements MifareClassicDataInterface {
 
@@ -61,34 +66,59 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                if(activeMFCTag != null) {
                     return;
                }
-               MainActivity.mainActivityInstance.activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(R.raw.mfc1k_random_content_fixed_keys);
+               Spinner mfc1kDumpImageSelectSpinner = (Spinner) MainActivity.mainActivityInstance.findViewById(R.id.dumpImageRawFilesSrcSpinner);
+               String dumpImageRawName = mfc1kDumpImageSelectSpinner.getSelectedItem().toString();
+               String appPkgName = MainActivity.mainActivityInstance.getPackageName();
+               int selectedDumpImageRawId = MainActivity.mainActivityInstance.getResources().getIdentifier(dumpImageRawName, "raw", appPkgName);
+               MainActivity.mainActivityInstance.activeMFCTag = MifareClassicTag.LoadMifareClassic1KFromResource(selectedDumpImageRawId);
                MainActivity.mainActivityInstance.DisplayNewMFCTag(activeMFCTag);
           }
      };
 
      final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
+     private static int NUM_RETRIES_TO_AUTH_SETTING = 0;
+     private static int MFC1K_DUMP_IMAGE_PICKER_INDEX = 0;
+
+     private void LoadSharedSettings() {
+          SharedPreferences sharedPrefs = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+          NUM_RETRIES_TO_AUTH_SETTING = sharedPrefs.getInt("NumRetriesToAuthSetting", 1);
+          MFC1K_DUMP_IMAGE_PICKER_INDEX = sharedPrefs.getInt("MFC1KDumpImagePickerIndex", 0);
+          FILE_PICKER_INIT_DIRECTORY = sharedPrefs.getString("FilePickerInitDirectory", Environment.getExternalStorageDirectory().getPath());
+     }
+
+     private void UpdateSharedSettings() {
+          SharedPreferences sharedPrefs = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+          SharedPreferences.Editor sprefEditor = sharedPrefs.edit();
+          sprefEditor.putInt("NumRetriesToAuthSetting", NUM_RETRIES_TO_AUTH_SETTING);
+          sprefEditor.putInt("MFC1KDumpImagePickerIndex", MFC1K_DUMP_IMAGE_PICKER_INDEX);
+          sprefEditor.putString("FilePickerInitDirectory", FILE_PICKER_INIT_DIRECTORY);
+          sprefEditor.apply();
+     }
+
      @Override
      protected void onCreate(Bundle savedInstanceState) {
 
           if(!isTaskRoot()) {
                Log.w(TAG, "ReLaunch Intent Action: " + getIntent().getAction());
-               onNewIntent(getIntent());
+               finish();
                return;
           }
           super.onCreate(savedInstanceState);
           mainActivityInstance = this;
           setContentView(R.layout.activity_main);
+          LoadSharedSettings();
           ConfigureMCTLibrary();
+          LoadKeysDialog.initStaticVariablesBeforeClass();
 
           Toolbar toolbar = findViewById(R.id.toolbarActionBar);
           toolbar.setLogo(R.drawable.main_action_bar_logo_icon);
-          toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) -- %s",
-                                            BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE,
-                                            BuildConfig.BUILD_TYPE));
+          toolbar.setSubtitle(String.format(Locale.US, "v%s (%s) -- APK Type (%s)",
+                                            BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.BUILD_TYPE));
           setActionBar(toolbar);
 
           SeekBar numAuthRetriesSeekbar = (SeekBar) findViewById(R.id.libraryNumRetriesSeekbar);
+          numAuthRetriesSeekbar.setProgress(NUM_RETRIES_TO_AUTH_SETTING);
           numAuthRetriesSeekbar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
                @Override
                public void onStopTrackingTouch(SeekBar seekBar) {}
@@ -97,10 +127,27 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                @Override
                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB = progress;
+                    MainActivity.NUM_RETRIES_TO_AUTH_SETTING = progress;
+                    TextView tvSettingLabel = (TextView) findViewById(R.id.numRetriesToAuthSeekbarSettingLabel);
+                    tvSettingLabel.setText(String.format(Locale.US, "(%d)", progress));
                     String statusMsg = String.format(Locale.US, "Changed RETRIES_TO_AUTH_KEYAB setting to %d auth retries.",
                                                      progress);
                     MainActivity.mainActivityInstance.DisplayToastMessage(statusMsg);
+                    MainActivity.mainActivityInstance.UpdateSharedSettings();
                }
+          });
+
+          Spinner mfc1kDumpImageSelectSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
+          mfc1kDumpImageSelectSpinner.setSelection(MFC1K_DUMP_IMAGE_PICKER_INDEX);
+          mfc1kDumpImageSelectSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+               @Override
+               public void onItemSelected(AdapterView parent, View view, int position, long id) {
+                    MainActivity.MFC1K_DUMP_IMAGE_PICKER_INDEX = position;
+                    MainActivity.mainActivityInstance.UpdateSharedSettings();
+                    DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE = null;
+               }
+               @Override
+               public void onNothingSelected(AdapterView parent) {}
           });
 
           int hasReadExternalPermission = checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
@@ -139,6 +186,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           Toast toastDisplay = Toast.makeText(this, toastMsg, toastLength);
           toastDisplay.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0);
           toastDisplay.show();
+          Log.i(TAG, "TOAST MSG DISPLAYED: " + toastMsg);
      }
 
      protected void DisplayToastMessage(String toastMsg) {
@@ -171,19 +219,20 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
      @Override
      public void onResume() {
           super.onResume();
+          if(currentlyTagScanning) {
+               MifareClassicToolLibrary.StartLiveTagScanning(this);
+          }
      }
 
      @Override
      public void onPause() {
           if(currentlyTagScanning) {
                MifareClassicToolLibrary.StopLiveTagScanning(this);
-               //currentlyTagScanning = false;
                Log.i(TAG, getString(R.string.app_name) + " : onPause AT " + MCTUtils.GetTimestamp());
           }
           super.onPause();
      }
 
-     public static final int FILE_SELECT_CODE = 0;
      private static boolean READY_WRITE_BLANK_TAG = false;
 
      @Override
@@ -207,7 +256,6 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                                    MCTUtils.BytesToHexString(nfcTag.getId()));
                     DisplayToastMessage(instStr, Toast.LENGTH_LONG);
                     SetHaveActiveTagIcon(true);
-                    currentlyTagScanning = false;
                     AsyncTask.execute(new Runnable() {
                          @Override
                          public void run() {
@@ -219,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                         String resFilePath = rawFileSrcSpinner.getSelectedItem().toString();
                                         int rawDumpResID = MainActivity.mainActivityInstance.getResources().getIdentifier(
                                                            resFilePath, "raw", MainActivity.mainActivityInstance.getPackageName());
-                                        MifareClassicTag.WriteBlankMFC1KTag(nfcTag, rawDumpResID, LoadKeysDialog.GetPresetKeys());
+                                        MifareClassicUtils.WriteBlankMFC1KTag(nfcTag, rawDumpResID, LoadKeysDialog.GetPresetKeys());
                                    }
                                    else {
                                         MainActivity.mainActivityInstance.newMFCTagFound = true;
@@ -264,73 +312,47 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
      }
 
-     @Override
-     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-          switch (requestCode) {
-               case FILE_SELECT_CODE:
-                    if (resultCode == RESULT_OK) {
-                         String filePath = "";
-                         Cursor cursor = getContentResolver().query(data.getData(), null, null, null, null, null);
-                         if (cursor != null && cursor.moveToFirst()) {
-                              filePath = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                              filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + filePath;
-                         }
-                         filePath = data.getDataString();
-                         throw new RuntimeException(filePath);
-                    }
-                    break;
-          }
-          super.onActivityResult(requestCode, resultCode, data);
-     }
-
      private static void ConfigureMCTLibrary() {
           MifareClassicToolLibrary.InitializeLibrary(MainActivity.mainActivityInstance);
+          MifareClassicToolLibrary.RETRIES_TO_AUTH_KEYAB = NUM_RETRIES_TO_AUTH_SETTING;
+     }
+
+     private static final int FILE_SELECT_ACTIVITY_CODE = 111;
+     private static String FILE_PICKER_INIT_DIRECTORY = Environment.getExternalStorageDirectory().getPath();
+
+     @Override
+     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+          if (requestCode == FILE_SELECT_ACTIVITY_CODE && resultCode == Activity.RESULT_OK) {
+               List<Uri> selectedFiles = Utils.getSelectedFilesFromResult(intent);
+               for (Uri fileUri: selectedFiles) {
+                    File selectedFile = Utils.getFileForUri(fileUri);
+                    FILE_PICKER_INIT_DIRECTORY = selectedFile.getParent();
+                    MainActivity.mainActivityInstance.UpdateSharedSettings();
+                    throw new RuntimeException(selectedFile.getAbsolutePath());
+               }
+          }
+          super.onActivityResult(requestCode, resultCode, intent);
      }
 
      public static File GetUserExternalFileSelection() {
-
-          //String externalFileProviderAuth = MainActivity.mainActivityInstance.getApplicationContext().getPackageName() + ".com.maxieds.ParklinkMCTLibraryDemo.externalFileProvider";
-          //File selectedFilePath = new File("userKeysFilePath.lst");
-          //Uri sharedFileUri = FileProvider.getUriForFile(MainActivity.mainActivityInstance, externalFileProviderAuth, selectedFilePath);
-          //ShareCompat.IntentBuilder intentBuilder = ShareCompat.IntentBuilder.from(MainActivity.mainActivityInstance).addStream(sharedFileUri);
-          //Intent chooserIntent = intentBuilder.createChooserIntent();
-          //chooserIntent.setDataAndType(sharedFileUri, "*/*");
-          //Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-          //intent.addCategory(Intent.CATEGORY_OPENABLE);
-          //intent.setType("*/*");
-          //MainActivity.mainActivityInstance.startActivityForResult(intent, FILE_SELECT_CODE);
-
-          //Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-          //intent.addCategory(Intent.CATEGORY_OPENABLE);
-          //intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-          //intent.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath() + "/"), "*/*");
-          //intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-          intent.addCategory(Intent.CATEGORY_OPENABLE);
-          intent.setDataAndType(Uri.parse(Environment.getExternalStorageDirectory().getAbsolutePath() + "/"), "*/*");
-          try {
-               mainActivityInstance.startActivityForResult(Intent.createChooser(intent, "Select a Text File of Your Keys to Upload!"), FILE_SELECT_CODE);
-          } catch (ActivityNotFoundException e) {
-               MainActivity.mainActivityInstance.DisplayToastMessage("Unable to choose external file: " + e.getMessage(), Toast.LENGTH_LONG);
-               return null;
-          }
+          Intent fileSelectIntent = new Intent(MainActivity.mainActivityInstance, FilePickerActivity.class);
+          fileSelectIntent.putExtra(FilePickerActivity.EXTRA_ALLOW_MULTIPLE, false);
+          fileSelectIntent.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, false);
+          fileSelectIntent.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_FILE);
+          fileSelectIntent.putExtra(FilePickerActivity.EXTRA_START_PATH, FILE_PICKER_INIT_DIRECTORY);
+          MainActivity.mainActivityInstance.startActivityForResult(fileSelectIntent, FILE_SELECT_ACTIVITY_CODE);
           try {
                Looper.loop();
-          } catch (RuntimeException rte) {
-               Log.e(TAG,"Len: " + rte.getMessage().split("java.lang.RuntimeException: ").length);
-               Log.e(TAG,"Len: " + rte.getMessage().split("java.lang.RuntimeException: ")[0]   );
+          } catch(RuntimeException rte) {
                String filePathSelection = rte.getMessage().split("java.lang.RuntimeException: ")[1];
                MainActivity.mainActivityInstance.DisplayToastMessage("User Selected Data File: " + filePathSelection, Toast.LENGTH_LONG);
+               // this is necessary because for some reason the app otherwise
+               // freezes without bringing the original Activity context back to the front:
+               MainActivity.mainActivityInstance.moveTaskToBack(false);
+               Intent bringToFrontIntent = new Intent(MainActivity.mainActivityInstance, MainActivity.class);
+               bringToFrontIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+               MainActivity.mainActivityInstance.startActivity(bringToFrontIntent);
                return new File(filePathSelection);
-               //try {
-                    //InputStream userSelectedFileStream = MainActivity.mainActivityInstance.getContentResolver().openInputStream(userSelectedFileUri);
-                    //return userSelectedFileStream;
-                    //return null;
-               //}
-               //catch(IOException ioe) {
-               //     ioe.printStackTrace();
-               //}
-
           }
           return null;
      }
@@ -353,22 +375,33 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           }
           ClearActiveDisplayWindow();
           // display a quick notice to the user of the more detailed tag information from the header sector:
-          String toastNoticeMsg = String.format(Locale.US, "New Tag Found!\nATQA: %s\nSAK: %s\nATS: %s",
-                                                mfcTagData.GetATQA(), mfcTagData.GetSAK(), mfcTagData.GetATS());
+          String toastNoticeMsg = String.format(Locale.US, "New Tag Found!\nATQA: %s\nSAK: %s\nATS: %s\nTime to read: % 4.2g sec",
+                                                mfcTagData.GetATQA(), mfcTagData.GetSAK(), mfcTagData.GetATS(), mfcTagData.GetTotalReadTime() / 1000.0);
           DisplayToastMessage(toastNoticeMsg, Toast.LENGTH_LONG);
           // next, display the quick summary tag stats at the top of the screen below the toolbar:
           TextView tvTagDesc = (TextView) findViewById(R.id.deviceStatusBarTagType);
           tvTagDesc.setText(mfcTagData.GetTagType());
           TextView tvTagUID = (TextView) findViewById(R.id.deviceStatusBarUID);
-          tvTagUID.setText(mfcTagData.GetTagUID());
+          tvTagUID.setText(mfcTagData.GetTagUID(":"));
           TextView tvTagSizes = (TextView) findViewById(R.id.deviceStatusBarSizeDims);
           tvTagSizes.setText(mfcTagData.GetTagSizeSpecString());
           // loop and add each sector to the linear layout within the scroll viewer:
           LinearLayout mainScrollerLayout = (LinearLayout) findViewById(R.id.mainDisplayItemsListLayout);
+          String[] expectedTagDiffData = null;
+          if(DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE != null) {
+               int dumpImageRawResId = getResources().getIdentifier(DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE, "raw", getPackageName());
+               expectedTagDiffData = MifareClassicUtils.GetDumpImageContents(dumpImageRawResId);
+          }
           for(int sec = 0; sec < mfcTagData.GetTagSectors(); sec++) {
                MifareClassicTag.MFCSector nextSectorData = mfcTagData.GetSectorByIndex(sec);
+               long timeToReadSector = nextSectorData.timeToRead;
                boolean sectorReadFailed = mfcTagData.GetSectorReadStatus(sec);
-               LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec, sectorReadFailed).GetDisplayLayout();
+               String[] expectedSectorDiffData = nextSectorData.sectorBlockData;
+               if(DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE != null) {
+                    int compareFromBlockIndex = sec * MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR;
+                    expectedSectorDiffData = Arrays.copyOfRange(expectedTagDiffData, compareFromBlockIndex, compareFromBlockIndex + MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR);
+               }
+               LinearLayout sectorDisplay = SectorUIDisplay.NewInstance(nextSectorData.sectorBlockData, sec, sectorReadFailed, timeToReadSector, expectedSectorDiffData).GetDisplayLayout();
                mainScrollerLayout.addView(sectorDisplay);
           }
      }
@@ -380,7 +413,9 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           dialog.setMessage(getString(R.string.aboutAppDesc) +
                             "\n\nBuild Date/Time: " + BuildConfig.BUILD_TIMESTAMP +
                             "\nGit Commit of Build: " + BuildConfig.GIT_COMMIT_HASH +
-                            "\nGit Revision Date:\n" + BuildConfig.GIT_COMMIT_DATE);
+                            "\nGit Revision Date:\n" + BuildConfig.GIT_COMMIT_DATE +
+                            "\nMCT Library Version: " + MifareClassicToolLibrary.GetLibraryVersion() +
+                            getString(R.string.aboutAppAndHelpDivider) + getString(R.string.appHelpContents));
           dialog.setPositiveButton("Ok", null);
           dialog.show();
      }
@@ -404,52 +439,51 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
           String rawFilePath = rawFileSrcSpinner.getSelectedItem().toString();
           int rawFileResID = getResources().getIdentifier(rawFilePath, "raw", getPackageName());
           InputStream dumpFileStream = getResources().openRawResource(rawFileResID);
-          String[] imageKeyData = MifareClassicTag.ExtractMFC1TagKeysFromDumpImage(dumpFileStream);
+          String[] imageKeyData = MifareClassicUtils.ExtractMFC1TagKeysFromDumpImage(dumpFileStream);
           LoadKeysDialog.AppendPresetKeys(imageKeyData);
+          DisplayToastMessage(String.format(Locale.US, getString(R.string.ExtractKeysMsg), imageKeyData.length), Toast.LENGTH_LONG);
      }
 
      public void ActionButtonDisplayHelpForMCTLibrarySettingsTextView(View helpBtnView) {
-          String helpMsg = "A sector read may fail if the attempted authentications with KeyA and/or KeyB" +
-                           " are unsuccessful. This may happen even if the attempted auth keys are correct to" +
-                           " unlock the sector data. The setting specifies the number of retries on failed" +
-                           " sector auth attempts (Default: 1).";
+          String helpMsg = getString(R.string.numRetriesToAuthSettingHelp);
           DisplayToastMessage(helpMsg, android.widget.Toast.LENGTH_LONG);
      }
 
-     public void ActionButtonDisplayHelpForMCTLibrarySettingsCheckbox(View helpBtnView) {
-          String helpMsg = "Sets whether to retry authentication with keyA/B selections if only one or the other" +
-                           " (but not both) of KeyA/KeyB has been correctly authenticated. If both KeyA/KeyB have" +
-                           " been correctly authed, this setting is irrelevent. If neither have been authed, then" +
-                           " the authentication procedure is repeated according to the number of retries setting" +
-                           " from above.";
-          DisplayToastMessage(helpMsg, android.widget.Toast.LENGTH_LONG);
+     private static String DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE = null;
+
+     public void ActionButtonSetDumpAsTagScanDiffSource(View btnView) {
+          Spinner mfc1kDumpImagesSpinner = (Spinner) findViewById(R.id.dumpImageRawFilesSrcSpinner);
+          DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE = mfc1kDumpImagesSpinner.getSelectedItem().toString();
+          DisplayToastMessage(getString(R.string.SetMFC1KDumpAsDiffMsg).replace("DUMP-IMG-NAME", DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE));
      }
 
      private static final int TAG_SCANNING_TIME = 8000;
      private static final int TAG_WRITE_TIMEOUT = 6000;
+
      private static Handler tagScanHandler = new Handler();
      private static Runnable tagScanRunnable = new Runnable() {
           public void run() {
-               if(MainActivity.mainActivityInstance.currentlyTagScanning &&
-                    !MainActivity.mainActivityInstance.newMFCTagFound) {
-                    MainActivity.mainActivityInstance.DisplayToastMessage("No Mifare Classic tags found!");
-               }
-               else if(MainActivity.mainActivityInstance.READY_WRITE_BLANK_TAG) {
+               if(MainActivity.mainActivityInstance.READY_WRITE_BLANK_TAG) {
                     MainActivity.mainActivityInstance.DisplayToastMessage("Write new tag operation timed out!");
                }
-               MainActivity.mainActivityInstance.currentlyTagScanning = false;
                MainActivity.mainActivityInstance.READY_WRITE_BLANK_TAG = false;
-               MainActivity.mainActivityInstance.SetActiveTagScanningIcon(false);
           }
      };
 
      public void ActionButtonScanNewTag(View btnView) {
-          newMFCTagFound = false;
-          currentlyTagScanning = true;
-          MifareClassicToolLibrary.StartLiveTagScanning(this);
-          tagScanHandler.postDelayed(tagScanRunnable, TAG_SCANNING_TIME);
-          SetActiveTagScanningIcon(true);
-          DisplayToastMessage("Scanning for new tag ...", Toast.LENGTH_LONG);
+          Button tagScanningBtn = (Button) findViewById(R.id.tagScanningButton);
+          if(currentlyTagScanning) {
+               currentlyTagScanning = false;
+               tagScanningBtn.setText("Enable Scan");
+               DisplayToastMessage(getString(R.string.DisableTagScanningMsg));
+               MainActivity.mainActivityInstance.SetActiveTagScanningIcon(false);
+          }
+          else {
+               currentlyTagScanning = true;
+               tagScanningBtn.setText("Disable Scan");
+               DisplayToastMessage(getString(R.string.EnableTagScanningMsg));
+               MainActivity.mainActivityInstance.SetActiveTagScanningIcon(true);
+          }
      }
 
      private final String OUTPUT_FILE_APP_DIRECTORY = "MCTLibraryDemoFiles";
@@ -459,9 +493,10 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                DisplayToastMessage("No active MFC tag to save!");
                return;
           }
-          String outfileBasePath = String.format(Locale.ENGLISH, "MifareClassic%s-tagdump-%s",
+          String outfileBasePath = String.format(Locale.ENGLISH, "MFC%s-%s",
                MifareClassicTag.GetTagByteCountString(activeMFCTag.GetTagSize()),
                MCTUtils.GetTimestamp().replace(" ", "").replace("@", "-"));
+          String toastStatusMsg = "";
           for(int ext = 0; ext < 2; ext++) {
                String fileExt = ext != 0 ? ".dmp" : ".hex";
                File downloadsFolder = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "//" + OUTPUT_FILE_APP_DIRECTORY + "//");
@@ -482,11 +517,15 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                          mimeType = "text/plain";
                          isMediaScannable = true;
                          downloadDesc = "MFC1K Data Dump Image (Hex Bytes)" + outfile.getName();
+                         toastStatusMsg += String.format(Locale.US, "Wrote dump data file \"%s\" (Hex Bytes) @ %dB.\n",
+                                                         outfile.getPath(), outfile.getTotalSpace());
                     } else {
                          activeMFCTag.ExportToBinaryDumpFile(outfile.getAbsolutePath());
                          mimeType = "application/octet-stream";
                          isMediaScannable = false;
                          downloadDesc = "MFC1K Data Dump Image (Binary Format)" + outfile.getName();
+                         toastStatusMsg += String.format(Locale.US, "Wrote dump data file \"%s\" (Binary Format) @ %dB.\n",
+                                                         outfile.getPath(), outfile.getTotalSpace());
                     }
                     downloadManager.addCompletedDownload(downloadDesc,
                                               OUTPUT_FILE_APP_DIRECTORY + "/" + outfile.getName(),
@@ -497,6 +536,8 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                     return;
                }
           }
+          toastStatusMsg += "\nCheck your phone's downloads folder for the two dump image files.";
+          DisplayToastMessage(toastStatusMsg, Toast.LENGTH_LONG);
           return;
      }
 

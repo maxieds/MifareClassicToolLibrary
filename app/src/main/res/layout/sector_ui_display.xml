@@ -40,10 +40,12 @@
         android:background="@color/colorPrimary"
         android:text=""
         android:textColor="@color/colorAccentHighlight"
-        android:textSize="16sp"
-        android:textStyle="normal|bold|italic"
+        android:textSize="14sp"
+        android:textStyle="normal|bold"
         android:fontFamily="serif-monospace"
         android:layout_gravity="center_vertical|center_horizontal"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
         />
 
 </LinearLayout>

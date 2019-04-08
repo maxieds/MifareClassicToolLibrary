@@ -39,4 +39,30 @@
     <!-- Without SAK+ATS (only ATQA) -->
     <string name="tag_0C00">Jewel, Innovision R&amp;T</string>
 
+    <!--Access Conditions for a data block-->
+    <string name="ac_data_block_0">R:AvB|W:AvB|I:AvB|D/T/R:AvB</string>
+    <string name="ac_data_block_1">R:AvB|W:X|I:X|D/T/R:X</string>
+    <string name="ac_data_block_2">R:AvB|W:B|I:X|D/T/R:X</string>
+    <string name="ac_data_block_3">R:AvB|W:B|I:B|D/T/R:AvB</string>
+    <string name="ac_data_block_4">R:AvB|W:X|I:X|D/T/R:AvB</string>
+    <string name="ac_data_block_5">R:B|W:B|I:X|D/T/R:X</string>
+    <string name="ac_data_block_6">R:B|W:X|I:X|D/T/R:X</string>
+    <string name="ac_data_block_7">R:X|W:X|I:X|D/T/R:X</string>
+
+    <!--Access Conditions for data blocks if keyB is readable-->
+    <string name="ac_data_block_no_keyb_0">R:A|W:A|I:A|D/T/R:A</string>
+    <string name="ac_data_block_no_keyb_1">R:A|W:X|I:X|D/T/R:X</string>
+    <string name="ac_data_block_no_keyb_2">R:A|W:X|I:X|D/T/R:A</string>
+    <string name="ac_data_block_no_keyb_3">R:X|W:X|I:X|D/T/R:X</string>
+
+    <!--Access Conditions for a Sector Trailer-->
+    <string name="ac_sector_trailer_0">RA:X|WA:A|RAC:A|WAC:X|RB:A|WB:A</string>
+    <string name="ac_sector_trailer_1">RA:X|WA:X|RAC:A|WAC:X|RB:A|WB:X</string>
+    <string name="ac_sector_trailer_2">RA:X|WA:B|RAC:AvB|WAC:X|RB:X|WB:B</string>
+    <string name="ac_sector_trailer_3">RA:X|WA:X|RAC:AvB|WAC:X|RB:X|WB:X</string>
+    <string name="ac_sector_trailer_4">RA:X|WA:A|RAC:A|WAC:A|RB:A|WB:A</string>
+    <string name="ac_sector_trailer_5">RA:X|WA:B|RAC:AvB|WAC:B|RB:X|WB:B</string>
+    <string name="ac_sector_trailer_6">RA:X|WA:X|RAC:AvB|WAC:B|RB:X|WB:X</string>
+    <string name="ac_sector_trailer_7">RA:X|WA:X|RAC:AvB|WAC:X|RB:X|WB:X</string>
+
 </resources>

@@ -1,34 +1,39 @@
 package com.maxieds.MifareClassicToolLibrary;
 
-//import android.R;
-//import com.example.package.R;
-import android.util.Log;
+import android.content.Context;
 import android.nfc.Tag;
-import android.nfc.tech.NfcA;
+import android.nfc.TagLostException;
 import android.nfc.tech.IsoDep;
 import android.nfc.tech.MifareClassic;
-import android.content.Context;
-import android.os.Parcel;
-import android.os.IBinder;
+import android.nfc.tech.NfcA;
 import android.os.Bundle;
-import android.nfc.TagLostException;
+import android.os.IBinder;
+import android.os.Parcel;
+import android.util.Log;
+import android.util.SparseArray;
 
+import com.maxieds.MifareClassicToolLibrary.MCTUtils.DiffTimeTimer;
+
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.*;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.GenericMFCException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.InvalidKeysException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.NFCErrorException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.NoKeysFoundException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.NoTagException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.PartialReadException;
+import static com.maxieds.MifareClassicToolLibrary.MifareClassicLibraryException.MFCLibraryExceptionType.UnsupportedTagException;
 
 public class MifareClassicTag {
 
      private static final String TAG = MifareClassicTag.class.getSimpleName();
 
-     public static final int MFCKEY_BYTE_SIZE = 6;
      public static final String NO_KEY = "------------";
      public static final String NO_DATA = "--------------------------------";
 
@@ -41,11 +46,13 @@ public class MifareClassicTag {
          public int sectorBytesPerBlock;
          public String[] sectorBlockData;
          private MifareClassic m_mfcTag;
+         public long timeToRead;
 
          public MFCSector() {
              sectorAddress = sectorSize = sectorBlockCount = sectorFirstBlock = sectorBytesPerBlock = 0;
              sectorBlockData = new String[0];
              m_mfcTag = null;
+             timeToRead = 0;
          }
 
          public void FromTag(Tag nfcTag, int saddr) throws MifareClassicLibraryException {
@@ -60,6 +67,14 @@ public class MifareClassicTag {
              sectorSize = sectorBlockCount * sectorBytesPerBlock;
          }
 
+         public void AsMifareClassic1KTag(int saddr) {
+              sectorAddress = saddr;
+              sectorFirstBlock = sectorAddress * MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR;
+              sectorBlockCount = MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR;
+              sectorBytesPerBlock = MifareClassicUtils.MFCLASSIC_BLOCK_SIZE;
+              sectorSize = sectorBlockCount * sectorBytesPerBlock;
+         }
+
          public boolean ReadSector(Tag nfcTag, String[] trialKeysList) throws MifareClassicLibraryException {
               if(nfcTag == null) {
                    throw new MifareClassicLibraryException(NFCErrorException);
@@ -72,11 +87,11 @@ public class MifareClassicTag {
                    throw new MifareClassicLibraryException(NFCErrorException);
               }
               try {
+                   mfcTag.setTimeout(500);
                    mfcTag.connect();
                    if(!mfcTag.isConnected()) {
                         throw new MifareClassicLibraryException(NFCErrorException);
                    }
-                   //mfcTag.setTimeout(1000);
               } catch(IOException ioe) {
                    ioe.printStackTrace();
                    throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
@@ -95,12 +110,6 @@ public class MifareClassicTag {
                    if (results[0] != null || results[1] != null) {
                         sectorBlockData = MergeSectorData(results[0], results[1]);
                    }
-                   //else {
-                   //     sectorBlockData = new String[sectorBlockCount];
-                   //     for(int blk = 0; blk < sectorBlockCount; blk++) {
-                   //          sectorBlockData[blk] = NO_DATA;
-                   //     }
-                   //}
               }
               try {
                    m_mfcTag.close();
@@ -285,7 +294,7 @@ public class MifareClassicTag {
                    return false;
               }
               for(int blk = 0; blk < sectorBlockData.length; blk++) {
-                   if(sectorBlockData[blk] != null && sectorBlockData[blk].contains("--")) {
+                   if(sectorBlockData[blk] != null && sectorBlockData[blk].contains("-")) {
                         return true;
                    }
                    else if(sectorBlockData[blk] == null) {
@@ -405,6 +414,14 @@ public class MifareClassicTag {
      private List<MFCSector> failedSectors, tagSectors;
      private String rfTechCaps, tagManufacturer;
      private String tagUID, tagATQA, tagSAK, tagATS;
+     private long totalTimeToRead;
+
+     // MCT accounting variables:
+     private SparseArray<byte[][]> mKeyMap;
+     private int mKeyMapStatus;
+     private int mLastSector;
+     private int mFirstSector;
+     private ArrayList<byte[]> mKeysWithOrder;
 
      private boolean ResetParameters() {
          mfcTagType = "";
@@ -414,6 +431,12 @@ public class MifareClassicTag {
          tagSectors = new ArrayList<MFCSector>();
          rfTechCaps = tagManufacturer = "";
          tagUID = tagATQA = tagSAK = tagATS = "";
+         totalTimeToRead = 0;
+         mKeyMap = new SparseArray<>();
+         mKeyMapStatus = 0;
+         mLastSector = -1;
+         mFirstSector = 0;
+         mKeysWithOrder = new ArrayList();
          return true;
      }
 
@@ -571,14 +594,18 @@ public class MifareClassicTag {
           else if(keyData == null) {
                throw new MifareClassicLibraryException(InvalidKeysException);
           }
+          DiffTimeTimer tagReadTimer = new DiffTimeTimer();
+          DiffTimeTimer sectorReadTimer = new DiffTimeTimer();
+          tagReadTimer.startTimer();
           mfcDumpImageData = new String[tagBlockCount];
           int blockIndex = 0, sct = 0;
           while(sct < tagSectorCount) {
                if(displayGUIProgressBar) {
-                    MifareClassicToolLibrary.DisplayProgressBar("SECTOR", sct + 1, tagSectorCount);
+                    MifareClassicToolLibrary.DisplayProgressBar("SECTOR", sct, tagSectorCount);
                }
+               sectorReadTimer.startTimer();
                MFCSector nextSector = new MFCSector();
-               nextSector.FromTag(nfcTag, sct);
+               nextSector.AsMifareClassic1KTag(sct);
                if(!nextSector.ReadSector(nfcTag, keyData) || nextSector.ContainsInvalidBlockData()) {
                     failedSectors.add(nextSector);
                }
@@ -587,7 +614,9 @@ public class MifareClassicTag {
                for(int blk = 0; blk < nextSector.sectorBlockData.length; blk++, blockIndex++) {
                     mfcDumpImageData[blockIndex] = nextSector.sectorBlockData[blk];
                }
+               nextSector.timeToRead = sectorReadTimer.diffTimer();
           }
+          totalTimeToRead = tagReadTimer.diffTimer();
           return true;
      }
 
@@ -666,6 +695,10 @@ public class MifareClassicTag {
          return tagUID;
      }
 
+     public String GetTagUID(String byteSep) {
+          return tagUID.substring(0, 2) + tagUID.substring(2).replaceAll("(.{2})", byteSep + "$1");
+     }
+
      public int GetTagUIDSize() {
          return tagUID.length() / 2;
      }
@@ -681,6 +714,8 @@ public class MifareClassicTag {
      public String GetATS() {
          return tagATS;
      }
+
+     public long GetTotalReadTime() { return totalTimeToRead; }
 
      public static String GetTagByteCountString(int byteCount) {
           if(byteCount == 1024) {
@@ -750,11 +785,6 @@ public class MifareClassicTag {
           return true;
      }
 
-     public static final int MFCLASSIC1K_TAG_SIZE = 1024;
-     public static final int MFCLASSIC1K_SECTOR_COUNT = 16;
-     public static final int MFCLASSIC1K_BLOCKS_PER_SECTOR = 4;
-     public static final int MFCLASSIC_BLOCK_SIZE = 16;
-
      public static MifareClassicTag LoadMifareClassic1KFromResource(int resID) {
 
           if(!MifareClassicToolLibrary.Initialized()) {
@@ -765,21 +795,21 @@ public class MifareClassicTag {
           // initialize statically "known" fields for a MFC1K tag:
           MifareClassicTag mfcTagData = new MifareClassicTag();
           mfcTagData.mfcTagType = "Mifare Classic 1K (From Dump Image)";
-          mfcTagData.tagSize = MFCLASSIC1K_TAG_SIZE;
+          mfcTagData.tagSize = MifareClassicUtils.MFCLASSIC1K_TAG_SIZE;
           mfcTagData.tagSectorCount = 16;
-          mfcTagData.tagBytesPerBlock = MFCLASSIC_BLOCK_SIZE;
+          mfcTagData.tagBytesPerBlock = MifareClassicUtils.MFCLASSIC_BLOCK_SIZE;
           mfcTagData.tagBlockCount = mfcTagData.tagSize / mfcTagData.tagBytesPerBlock;
           mfcTagData.tagManufacturer = "Unknown";
 
           // initialize the tag data bytes from the dump image resource:
-          Context appMainContext = MifareClassicToolLibrary.GetApplicationContext();
+          android.content.Context appMainContext = MifareClassicToolLibrary.GetApplicationContext();
           try {
-               InputStream rawFileStream = appMainContext.getResources().openRawResource(resID);
+               java.io.InputStream rawFileStream = appMainContext.getResources().openRawResource(resID);
                mfcTagData.mfcDumpImageData = new String[mfcTagData.tagBlockCount];
                int bytesReadCount = 0, blkIndex = 0;
-               byte[] byteReadBuffer = new byte[MFCLASSIC_BLOCK_SIZE];
-               while (bytesReadCount < MFCLASSIC1K_TAG_SIZE) {
-                    int readByteCount = rawFileStream.read(byteReadBuffer, 0, MFCLASSIC_BLOCK_SIZE);
+               byte[] byteReadBuffer = new byte[MifareClassicUtils.MFCLASSIC_BLOCK_SIZE];
+               while (bytesReadCount < MifareClassicUtils.MFCLASSIC1K_TAG_SIZE) {
+                    int readByteCount = rawFileStream.read(byteReadBuffer, 0, MifareClassicUtils.MFCLASSIC_BLOCK_SIZE);
                     if (readByteCount < 0) {
                          break;
                     }
@@ -787,8 +817,8 @@ public class MifareClassicTag {
                     bytesReadCount += readByteCount;
                     blkIndex++;
                }
-               if(bytesReadCount < MFCLASSIC1K_TAG_SIZE) {
-                    Log.e(TAG, "ERROR: Only able to load " + bytesReadCount + " of " + MFCLASSIC1K_TAG_SIZE + "bytes from tag!");
+               if(bytesReadCount < MifareClassicUtils.MFCLASSIC1K_TAG_SIZE) {
+                    Log.e(TAG, "ERROR: Only able to load " + bytesReadCount + " of " + MifareClassicUtils.MFCLASSIC1K_TAG_SIZE + "bytes from tag!");
                     return null;
                }
           } catch(IOException ioe) {
@@ -797,15 +827,15 @@ public class MifareClassicTag {
           }
           // setup the individual sector data:
           for(int sec = 0; sec < mfcTagData.tagSectorCount; sec++) {
-               MFCSector nextSector = new MFCSector();
+               com.maxieds.MifareClassicToolLibrary.MifareClassicTag.MFCSector nextSector = new com.maxieds.MifareClassicToolLibrary.MifareClassicTag.MFCSector();
                nextSector.sectorAddress = sec;
                nextSector.sectorSize = mfcTagData.tagBlockCount * mfcTagData.tagBytesPerBlock;
                nextSector.sectorBlockCount = mfcTagData.tagBlockCount;
-               nextSector.sectorFirstBlock = sec * MFCLASSIC1K_BLOCKS_PER_SECTOR;
+               nextSector.sectorFirstBlock = sec * MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR;
                nextSector.sectorBytesPerBlock = mfcTagData.tagBytesPerBlock;
-               nextSector.sectorBlockData = new String[MFCLASSIC1K_BLOCKS_PER_SECTOR];
-               for(int blk = 0; blk < MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
-                    nextSector.sectorBlockData[blk] = mfcTagData.mfcDumpImageData[sec * MFCLASSIC1K_BLOCKS_PER_SECTOR + blk];
+               nextSector.sectorBlockData = new String[MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR];
+               for(int blk = 0; blk < MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
+                    nextSector.sectorBlockData[blk] = mfcTagData.mfcDumpImageData[sec * MifareClassicUtils.MFCLASSIC1K_BLOCKS_PER_SECTOR + blk];
                }
                mfcTagData.tagSectors.add(nextSector);
           }
@@ -823,108 +853,6 @@ public class MifareClassicTag {
           mfcTagData.tagManufacturer = mfcTagData.mfcDumpImageData[1];
           return mfcTagData;
 
-     }
-
-     public static String[] ExtractMFC1TagKeysFromDumpImage(InputStream dumpImageStream) {
-          if(dumpImageStream == null) {
-               return null;
-          }
-          String[] mfcTagKeyData = new String[2 * MFCLASSIC1K_SECTOR_COUNT];
-          byte[] blockBytesBuf = new byte[MFCLASSIC_BLOCK_SIZE];
-          byte[] keyBytes = new byte[6];
-          int blockLineCount = 0, blockInSectorIndex = 0;
-          try {
-               for (int sec = 0; sec < MFCLASSIC1K_SECTOR_COUNT; sec++) {
-                    for(int blk = 1; blk <= MFCLASSIC1K_BLOCKS_PER_SECTOR; blk++) {
-                         if ((blockLineCount = dumpImageStream.read(blockBytesBuf, 0, MFCLASSIC_BLOCK_SIZE)) == -1) {
-                              break;
-                         } else if (blk == MFCLASSIC1K_BLOCKS_PER_SECTOR) { // trailing sector:
-                              System.arraycopy(blockBytesBuf, 0, keyBytes, 0, 6);
-                              mfcTagKeyData[2 * sec] = MCTUtils.BytesToHexString(keyBytes);
-                              System.arraycopy(blockBytesBuf, 10, keyBytes, 0, 6);
-                              mfcTagKeyData[2 * sec + 1] = MCTUtils.BytesToHexString(keyBytes);
-                         }
-                    }
-               }
-               dumpImageStream.close();
-          } catch(IOException ioe) {
-               ioe.printStackTrace();
-               try {
-                    dumpImageStream.close();
-               } catch(IOException closeioe) {
-                    closeioe.printStackTrace();
-               }
-               return null;
-          }
-          return mfcTagKeyData;
-     }
-
-     private static final String BLANK_MFC1KTAG_KEYA = "FFFFFFFFFFFF";
-     private static final String BLANK_MFC1KTAG_KEYB = "000000000000";
-
-     public static boolean WriteBlankMFC1KTag(Tag nfcTag, int rawResID, String[] keyDataList) throws MifareClassicLibraryException {
-          // get a handle on the Mifare Classic tag:
-          boolean writeTagStatus = true;
-          MifareClassic mfcTag = MifareClassic.get(nfcTag);
-          if(mfcTag == null) {
-               throw new MifareClassicLibraryException(NFCErrorException);
-          }
-          try {
-               mfcTag.connect();
-               if(!mfcTag.isConnected()) {
-                    throw new MifareClassicLibraryException(NFCErrorException);
-               }
-               Log.e(TAG, "NFC tag timeout: " + mfcTag.getTimeout());
-               //mfcTag.setTimeout(5000);
-          } catch(IOException ioe) {
-               ioe.printStackTrace();
-               throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
-          }
-          // open the /res/raw file resource for the dump file we are going to be writing:
-          Context appContext = MifareClassicToolLibrary.GetApplicationContext();
-          try {
-               InputStream rawFileStream = appContext.getResources().openRawResource(rawResID);
-               byte[] dumpFileReadBuf = new byte[MFCLASSIC_BLOCK_SIZE];
-               int bufReadCount, sectorAddr = 0, sectorBlockOffset = 0, activeKeyIndex = 0;
-               int sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddr);
-               int curSectorBlock = sectorBlockCount;
-               int totalTagSectors = mfcTag.getSectorCount();
-               while ((bufReadCount = rawFileStream.read(dumpFileReadBuf, 0, MFCLASSIC_BLOCK_SIZE)) != -1) {
-                    if (bufReadCount < MFCLASSIC_BLOCK_SIZE) {
-                         throw new MifareClassicLibraryException(GenericMFCException, "Unable to read entire block.");
-                    }
-                    if(curSectorBlock == sectorBlockCount) {
-                         curSectorBlock = 0;
-                         sectorAddr++;
-                         sectorBlockOffset = mfcTag.sectorToBlock(sectorAddr);
-                         sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddr);
-                         boolean ableToAuthKeyA = false;
-                         for(int k = 0; k < keyDataList.length; k++) {
-                              byte[] keyBytes = MCTUtils.HexStringToBytes(keyDataList[k]);
-                              if (mfcTag.authenticateSectorWithKeyA(sectorAddr, keyBytes)) {
-                                   activeKeyIndex = k;
-                                   ableToAuthKeyA = true;
-                                   break;
-                              }
-                         }
-                         if(!ableToAuthKeyA) {
-                              Log.e(TAG, "Could not auth with keyA on sector #" + sectorAddr);
-                              writeTagStatus = false;
-                              continue;
-                         }
-                         Log.i(TAG, "Successfully authed with tag on sector #" + sectorAddr + " with key " + keyDataList[activeKeyIndex]);
-                    }
-                    mfcTag.writeBlock(sectorBlockOffset + curSectorBlock, dumpFileReadBuf);
-                    curSectorBlock++;
-                    MifareClassicToolLibrary.DisplayProgressBar("SECTOR WRITE", sectorAddr + 1, totalTagSectors);
-               }
-               rawFileStream.close();
-               mfcTag.close();
-          } catch(IOException ioe) {
-               ioe.printStackTrace();
-               throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
-          }
-          return writeTagStatus;
      }
 
 }

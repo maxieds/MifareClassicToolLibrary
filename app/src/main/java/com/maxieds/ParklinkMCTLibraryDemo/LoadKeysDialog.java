@@ -12,8 +12,11 @@ import android.view.View;
 import java.io.InputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.text.Collator;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Locale;
 
 import com.maxieds.ParklinkMCTLibraryDemo.R;
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
@@ -65,12 +68,13 @@ public class LoadKeysDialog {
           keyDataCopy.addAll(presetTestKeys);
           presetTestKeys.clear();
           for(int k = 0; k < keyData.length; k++) {
-               String nextKey = keyData[k];
+               String nextKey = keyData[k].toUpperCase(Locale.US);
                if(MCTUtils.IsHexAnd6Byte(nextKey) && !keyDataCopy.contains(nextKey)) {
-                    keyDataCopy.add(0, nextKey.toUpperCase());
+                    keyDataCopy.add(0, nextKey);
                }
           }
           presetTestKeys.addAll(keyDataCopy);
+          //Collections.sort(presetTestKeys, Collator.getInstance());
           return true;
      }
 
@@ -103,9 +107,9 @@ public class LoadKeysDialog {
           dialog.setView(dialogKeyDisplaySpinnerFinal);
 
           dialog.setMessage(R.string.loadKeysDialogDesc);
-          dialog.setPositiveButton("Key File", null);
+          dialog.setPositiveButton("Load File", null);
           dialog.setNeutralButton("Parklink Keys", null);
-          dialog.setNegativeButton("Extended Keys", null);
+          dialog.setNegativeButton("Ext/Std Keys", null);
           dialog.setInverseBackgroundForced(true);
           displayAddKeysDialog = dialog.create();
           displayAddKeysDialog.setOnShowListener(new DialogInterface.OnShowListener() {

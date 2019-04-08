@@ -1,17 +1,16 @@
 package com.maxieds.MifareClassicToolLibrary;
 
-import android.util.Log;
 import android.text.format.Time;
+import android.util.Log;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Random;
-import java.util.List;
-import java.util.ArrayList;
-import java.io.InputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Random;
 
 public class MCTUtils {
 
@@ -114,6 +113,37 @@ public class MCTUtils {
         Time currentTime = new Time();
         currentTime.setToNow();
         return currentTime.format("%Y-%m-%d @ %T %p");
+    }
+
+    public static class DiffTimeTimer {
+
+        private long localStartTime;
+        private long localEndTime;
+
+        public DiffTimeTimer() {
+            localStartTime = localEndTime = 0;
+        }
+
+        public static long getTimeNowMillis() {
+             return Calendar.getInstance().getTime().getTime();
+        }
+
+        public void startTimer() {
+            localStartTime = getTimeNowMillis();
+        }
+
+        public void endTimer() {
+            localEndTime = getTimeNowMillis();
+        }
+
+        public long diffTimer() {
+             return getTimeNowMillis() - localStartTime;
+        }
+
+        public long getDiffTimeMillis() {
+             return localEndTime - localStartTime;
+        }
+
     }
 
 }
