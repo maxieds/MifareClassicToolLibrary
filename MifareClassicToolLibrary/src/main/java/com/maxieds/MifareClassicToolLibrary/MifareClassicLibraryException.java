@@ -14,7 +14,7 @@ public class MifareClassicLibraryException extends Exception {
 
         GenericMFCException(0x01, "Generic MFC library error"),
         UnknownMFCException(0x02, "Unknown library exeption"),
-        IOException(0x11, "I/O exception"),
+        TagIOException(0x11, "I/O exception"),
         NFCErrorException(0x12, "Android NFC error"),
         NoKeysFoundException(0x21, "No keys found"),
         InvalidKeysException(0x22, "Invalid keys"),

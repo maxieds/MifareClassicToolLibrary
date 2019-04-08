@@ -65,7 +65,7 @@ public class MifareClassicUtils {
                     throw new MifareClassicLibraryException(NFCErrorException);
                }
                android.util.Log.e(TAG, "NFC tag timeout: " + mfcTag.getTimeout());
-               //mfcTag.setTimeout(5000);
+               mfcTag.setTimeout(1500);
           } catch(java.io.IOException ioe) {
                ioe.printStackTrace();
                throw new MifareClassicLibraryException(NFCErrorException, ioe.getMessage());
@@ -73,10 +73,10 @@ public class MifareClassicUtils {
           // open the /res/raw file resource for the dump file we are going to be writing:
           android.content.Context appContext = MifareClassicToolLibrary.GetApplicationContext();
           try {
-               java.io.InputStream rawFileStream = appContext.getResources().openRawResource(rawResID);
+               InputStream rawFileStream = appContext.getResources().openRawResource(rawResID);
                byte[] dumpFileReadBuf = new byte[MFCLASSIC_BLOCK_SIZE];
-               int bufReadCount, sectorAddr = 0, sectorBlockOffset = 0, activeKeyIndex = 0;
-               int sectorBlockCount = mfcTag.getBlockCountInSector(sectorAddr);
+               int bufReadCount, sectorAddr = -1, sectorBlockOffset = 0, activeKeyIndex = 0;
+               int sectorBlockCount = mfcTag.getBlockCountInSector(0);
                int curSectorBlock = sectorBlockCount;
                int totalTagSectors = mfcTag.getSectorCount();
                while ((bufReadCount = rawFileStream.read(dumpFileReadBuf, 0, MFCLASSIC_BLOCK_SIZE)) != -1) {
@@ -104,7 +104,9 @@ public class MifareClassicUtils {
                          }
                          android.util.Log.i(TAG, "Successfully authed with tag on sector #" + sectorAddr + " with key " + keyDataList[activeKeyIndex]);
                     }
-                    mfcTag.writeBlock(sectorBlockOffset + curSectorBlock, dumpFileReadBuf);
+                    if(sectorAddr > 0 || curSectorBlock > 0) {
+                         mfcTag.writeBlock(sectorBlockOffset + curSectorBlock, dumpFileReadBuf);
+                    }
                     curSectorBlock++;
                     MifareClassicToolLibrary.DisplayProgressBar("SECTOR WRITE", sectorAddr, totalTagSectors);
                }
@@ -123,7 +125,7 @@ public class MifareClassicUtils {
           byte[] blockBytes = new byte[MFCLASSIC_BLOCK_SIZE];
           int blockLineCount = 0, blkIndex = 0;
           try {
-               while ((blockLineCount = dumpImageStream.read(blockBytes, 0, MFCLASSIC_BLOCK_SIZE)) != 0) {
+               while ((blockLineCount = dumpImageStream.read(blockBytes, 0, MFCLASSIC_BLOCK_SIZE)) != -1) {
                     if(blkIndex >= MFCLASSIC1K_SECTOR_COUNT * MFCLASSIC1K_BLOCKS_PER_SECTOR) {
                          Log.e(TAG, "Attempting to read more than a MFC1K #" + MFCLASSIC1K_SECTOR_COUNT * MFCLASSIC1K_BLOCKS_PER_SECTOR + " blocks...");
                          break;

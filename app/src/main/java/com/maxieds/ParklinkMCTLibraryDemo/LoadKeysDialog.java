@@ -34,7 +34,7 @@ public class LoadKeysDialog {
      public static void initStaticVariablesBeforeClass() {
           presetTestKeys = new ArrayList<String>();
           String[] defaultKeyData = new String[] {
-               "000000000000",
+               //"000000000000",
                MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_DEFAULT),
                MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_MIFARE_APPLICATION_DIRECTORY),
                MCTUtils.BytesToHexString(android.nfc.tech.MifareClassic.KEY_NFC_FORUM)

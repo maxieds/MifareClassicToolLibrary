@@ -56,7 +56,6 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
 
      public static MainActivity mainActivityInstance = null;
      private static boolean currentlyTagScanning = false;
-     private static boolean newMFCTagFound = false;
      private static MifareClassicTag activeMFCTag = null;
 
      private static final int LAUNCH_DEFAULT_TAG_DELAY = 250;
@@ -244,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                (intent.getAction().equals(NfcAdapter.ACTION_TAG_DISCOVERED) ||
              intent.getAction().equals(NfcAdapter.ACTION_TECH_DISCOVERED))) {
                final Tag nfcTag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
-               if(MifareClassicTag.CheckMifareClassicSupport(nfcTag, this) != 0) {
+               if(MifareClassicTag.CheckMifareClassicSupport(nfcTag) != 0) {
                     DisplayToastMessage("The discovered NFC device is not a Mifare Classic tag.");
                }
                else {
@@ -270,7 +269,6 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                                         MifareClassicUtils.WriteBlankMFC1KTag(nfcTag, rawDumpResID, LoadKeysDialog.GetPresetKeys());
                                    }
                                    else {
-                                        MainActivity.mainActivityInstance.newMFCTagFound = true;
                                         MifareClassicTag mfcTag = MifareClassicTag.Decode(nfcTag, LoadKeysDialog.GetPresetKeys(), true);
                                         MainActivity.mainActivityInstance.activeMFCTag = mfcTag;
                                         MainActivity.mainActivityInstance.runOnUiThread(new Runnable() {
@@ -392,7 +390,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                int dumpImageRawResId = getResources().getIdentifier(DIFF_COMPARE_MFC1K_DUMP_IMAGE_SOURCE, "raw", getPackageName());
                expectedTagDiffData = MifareClassicUtils.GetDumpImageContents(dumpImageRawResId);
           }
-          for(int sec = 0; sec < mfcTagData.GetTagSectors(); sec++) {
+          for(int sec = 0; sec < mfcTagData.GetSectorCount(); sec++) {
                MifareClassicTag.MFCSector nextSectorData = mfcTagData.GetSectorByIndex(sec);
                long timeToReadSector = nextSectorData.timeToRead;
                boolean sectorReadFailed = mfcTagData.GetSectorReadStatus(sec);
@@ -494,7 +492,7 @@ public class MainActivity extends AppCompatActivity implements MifareClassicData
                return;
           }
           String outfileBasePath = String.format(Locale.ENGLISH, "MFC%s-%s",
-               MifareClassicTag.GetTagByteCountString(activeMFCTag.GetTagSize()),
+               MifareClassicTag.GetTagByteCountString(activeMFCTag.GetSize()),
                MCTUtils.GetTimestamp().replace(" ", "").replace("@", "-"));
           String toastStatusMsg = "";
           for(int ext = 0; ext < 2; ext++) {

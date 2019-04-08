@@ -32,8 +32,8 @@ android {
         applicationId "com.maxieds.ParklinkMCTLibraryDemo"
         minSdkVersion 25
         targetSdkVersion 28
-        versionCode 15
-        versionName "1.1.5"
+        versionCode 16
+        versionName "1.1.6"
 
         buildConfigField "String", "BUILD_TIMESTAMP", "\"" + getDateTimestamp() + "\""
         buildConfigField "String", "GIT_COMMIT_HASH", "\"" + getGitCommitHash() + "\""

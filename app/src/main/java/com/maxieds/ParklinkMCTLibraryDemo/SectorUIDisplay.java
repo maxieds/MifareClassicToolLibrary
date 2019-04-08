@@ -5,7 +5,7 @@ import android.widget.TextView;
 import android.view.LayoutInflater;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
-import android.text.SpannableStringBuilder;
+import android.util.Log;
 
 import java.util.Locale;
 
@@ -16,6 +16,8 @@ import com.maxieds.MifareClassicToolLibrary.MifareClassicUtils;
 import com.maxieds.MifareClassicToolLibrary.MCTUtils;
 
 public class SectorUIDisplay {
+
+     private static final String TAG = SectorUIDisplay.class.getSimpleName();
 
      private LinearLayout mainLayoutContainer;
 
@@ -36,7 +38,12 @@ public class SectorUIDisplay {
           SectorUIDisplay sectorDisplay = new SectorUIDisplay();
           LinearLayout sectorMainLayoutContainer = sectorDisplay.GetDisplayLayout();
           TextView tvSectorDisplayHeader = (TextView) sectorMainLayoutContainer.findViewById(R.id.sectorDisplayHeaderText);
-          tvSectorDisplayHeader.setText(String.format(Locale.US, "Sector %02d -- Read Time % 6.3g sec", sectorIndex, readTimeMillis / 1000.0));
+          if(readTimeMillis == 0) {
+               tvSectorDisplayHeader.setText(String.format(Locale.US, "Sector %02d", sectorIndex));
+          }
+          else {
+               tvSectorDisplayHeader.setText(String.format(Locale.US, "Sector %02d -- Read Time % 6.3g sec", sectorIndex, readTimeMillis / 1000.0));
+          }
           if(!sectorReadFailed && sectorBlockData.length > 0) {
                tvSectorDisplayHeader.append(" (READ FAILED)");
           }

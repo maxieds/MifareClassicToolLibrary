@@ -39,6 +39,7 @@ public class MifareClassicToolLibrary {
      private static final String PACKAGE = "com.maxieds.MifareClassicToolLibrary";
 
      public static int RETRIES_TO_AUTH_KEYAB = 1;
+     public static boolean AUTORECONNECT = false;
 
      private static MifareClassicDataInterface localMFCDataIface = null;
 

@@ -243,7 +243,7 @@
             android:background="@color/transparent"
             android:fontFamily="sans-serif"
             android:padding="2dp"
-            android:text="(0)"
+            android:text="(1)"
             android:textSize="14sp"
             android:textStyle="normal|italic"
             android:layout_gravity="center_vertical"/>
