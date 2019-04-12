@@ -672,39 +672,39 @@ public class MifareClassicTag {
       */
      private SparseArray<String[]> ReadAsMuchAsPossible(SparseArray<byte[][]> keyMap) throws MifareClassicLibraryException {
           SparseArray<String[]> resultSparseArray;
-          DiffTimeTimer sectorReadTimer = new DiffTimeTimer();
+          //DiffTimeTimer sectorReadTimer = new DiffTimeTimer();
           if (keyMap != null && keyMap.size() > 0) {
                resultSparseArray = new SparseArray<>(keyMap.size());
                // For all entries in map do:
                for (int i = 0; i < keyMap.size(); i++) {
-                    if(displayGUIProgressBar) {
-                         MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i, keyMap.size());
-                    }
+                    //if(displayGUIProgressBar) {
+                    //     MifareClassicToolLibrary.DisplayProgressBar("SECTOR", i, keyMap.size());
+                    //}
                     MifareClassicToolLibrary.GetDataInterface().PostTagScanSectorReadProgress(i, keyMap.size());
                     String[][] results = new String[2][];
                     if (keyMap.valueAt(i)[0] != null) {
                          // Read with key A.
-                         sectorReadTimer.startTimer();
+                         //sectorReadTimer.startTimer();
                          int sectorAddr = keyMap.keyAt(i);
-                         Log.d(TAG, "Sector #" + sectorAddr + " keyA = " + MCTUtils.BytesToHexString(keyMap.valueAt(i)[0]));
+                         //Log.d(TAG, "Sector #" + sectorAddr + " keyA = " + MCTUtils.BytesToHexString(keyMap.valueAt(i)[0]));
                          results[0] = tagSectors.get(sectorAddr).ReadSector(sectorAddr, keyMap.valueAt(i)[0], false);
-                         tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
+                         //tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
                     }
                     if (keyMap.valueAt(i)[1] != null) {
                          // Read with key B.
-                         sectorReadTimer.startTimer();
+                         //sectorReadTimer.startTimer();
                          int sectorAddr = keyMap.keyAt(i);
-                         Log.d(TAG, "Sector #" + sectorAddr + " keyB = " + MCTUtils.BytesToHexString(keyMap.valueAt(i)[1]));
+                         //Log.d(TAG, "Sector #" + sectorAddr + " keyB = " + MCTUtils.BytesToHexString(keyMap.valueAt(i)[1]));
                          results[1] = tagSectors.get(sectorAddr).ReadSector(sectorAddr, keyMap.valueAt(i)[1], true);
-                         tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
+                         //tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
                     }
                     // Merge results.
                     if (results[0] != null || results[1] != null) {
-                         sectorReadTimer.startTimer();
+                         //sectorReadTimer.startTimer();
                          int sectorAddr = keyMap.keyAt(i);
-                         Log.d(TAG, "Merging sector #" + sectorAddr);
+                         //Log.d(TAG, "Merging sector #" + sectorAddr);
                          resultSparseArray.put(sectorAddr, tagSectors.get(sectorAddr).MergeSectorData(results[0], results[1]));
-                         tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
+                         //tagSectors.get(sectorAddr).timeToRead += sectorReadTimer.diffTimer();
                     }
                }
                return resultSparseArray;
