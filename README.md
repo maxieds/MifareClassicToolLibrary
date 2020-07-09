@@ -1,12 +1,34 @@
 # MCTLibraryDemo Application
 
-Note that for the most part this demo application should serve as documentation 
-for how to use the library in client applications. Other main documentation is 
-provided in this README below. 
+## License and credits -- GPLv3
 
-# Documentation for the MCTLibrary
+This original sources for the [MFCTool application](www.icaria.de/mct/) were
+originally developed by
+[Gerhard Klostermeier](https://github.com/ikarus23) in cooperation with SySS GmbH
+([www.syss.de](https://www.syss.de/)) and Aalen
+University ([www.htw-aalen.de](http://www.htw-aalen.de/)) in 2012/2013.
+It is free software and licensed under the
+[GNU General Public License v3.0 (GPLv3)](https://www.gnu.org/licenses/gpl-3.0.txt):
 
-## Descriptions of files in the library
+>This program (MifareClassicToolLibrary) is free software: you can redistribute it and/or modify
+>it under the terms of the GNU General Public License as published by
+>the Free Software Foundation, either version 3 of the License, or
+>(at your option) any later version.
+>
+>This program is distributed in the hope that it will be useful,
+>but WITHOUT ANY WARRANTY; without even the implied warranty of
+>MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+>GNU General Public License for more details.
+
+## Documentation for the MCTLibrary
+
+Note that for the most part this demo application should serve as documentation
+for how to use the library in client applications. Other main documentation is
+provided in this README below. There is a user-friendly open source
+client application that works on Android
+[available here](https://github.com/maxieds/MCTLibraryDemo).
+
+### Descriptions of files in the library
 
 The following files form the core implementation of the library:
 * **MCTUtils.java:** Utility functions from the MCT app. Includes operations for 
@@ -24,7 +46,7 @@ functions for scanning tags and reading in the extended key sets.
 * **MifareClassicUtils.java:** MFC1K tag helper functions. Includes routines for 
 writing blank tags with Android and for loading a new tag from a dump image file. 
 
-## Key library settings
+### Key library settings
 
 The following settings are used to configure the library:
 ```
@@ -35,7 +57,7 @@ public class MifareClassicToolLibrary {
 }
 ```
 
-## Data interface implementations
+### Data interface implementations
 
 All client applications (activities) using the library need to provide an 
 implementation of the following interface:
@@ -59,9 +81,9 @@ public class MifareClassicToolLibrary {
 }
 ```
 
-## How to read a new MFC1K tag
+### How to read a new MFC1K tag
 
-### Enabling tag scanning in the application
+#### Enabling tag scanning in the application
 
 Once the library is inititalized as in the last section by calling 
 ``MifareClassicToolLibrary.InitializeLibrary``, you can enable automatic tag 
@@ -115,7 +137,7 @@ following information:
 </resources>
 ```
 
-### Processing a new Tag
+#### Processing a new Tag
 
 Once you have enabled live tag scanning in the client activity (and added the intents to 
 process new tags to the application *Manifest* file), newly found NFC tags will be registered 
@@ -178,7 +200,7 @@ The subclass ``MifareClassicTag.MFCSector`` contains the following public fields
      }
 ```
 
-## Other useful functions
+### Other useful functions
 
 ```
 public class MifareClassicToolLibrary {
