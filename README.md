@@ -4,7 +4,7 @@
 
 This original sources for the [MFCTool application](www.icaria.de/mct/) were
 originally developed by
-[Gerhard Klostermeier](https://github.com/ikarus23) in cooperation with SySS GmbH
+[**Gerhard Klostermeier**](https://github.com/ikarus23) in cooperation with SySS GmbH
 ([www.syss.de](https://www.syss.de/)) and Aalen
 University ([www.htw-aalen.de](http://www.htw-aalen.de/)) in 2012/2013.
 It is free software and licensed under the
