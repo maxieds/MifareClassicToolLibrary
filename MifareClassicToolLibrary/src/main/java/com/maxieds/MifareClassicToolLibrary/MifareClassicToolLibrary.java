@@ -12,6 +12,8 @@ GNU General Public License for more details.
 The complete license provided with source distributions of this library is
 available at the following link:
 https://github.com/maxieds/MifareClassicToolLibrary
+
+Copyright by Maxie Schmidt and Gerhard Klostermeier.
 */
 
 package com.maxieds.MifareClassicToolLibrary;
